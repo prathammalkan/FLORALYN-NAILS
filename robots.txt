@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /api/
+
+# Sitemap location (update with your actual Vercel domain)
+Sitemap: https://floralyn.vercel.app/sitemap.xml

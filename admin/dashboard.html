@@ -1,0 +1,377 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Dashboard — Floralyn Admin</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/admin.css" />
+</head>
+<body>
+
+  <!-- ─── Auth gate (hidden until session verified) ──────────── -->
+  <div id="auth-loading" class="auth-loading">
+    <div class="auth-spinner"></div>
+    <p>Verifying session…</p>
+  </div>
+
+  <!-- ─── Main app (hidden until auth confirmed) ─────────────── -->
+  <div id="app" class="app" style="display:none">
+
+    <!-- ── Sidebar ─────────────────────────────────────────────── -->
+    <aside class="sidebar" id="sidebar" aria-label="Admin navigation">
+      <div class="sidebar-logo">
+        <img src="../images/logo.png" alt="Floralyn" width="36" height="36" />
+        <span>Floralyn</span>
+      </div>
+
+      <nav class="sidebar-nav" aria-label="Dashboard sections">
+        <button class="nav-item active" data-view="dashboard"    aria-current="page">
+          <span class="nav-icon" aria-hidden="true">📊</span> Dashboard
+        </button>
+        <button class="nav-item" data-view="appointments">
+          <span class="nav-icon" aria-hidden="true">📅</span> Appointments
+        </button>
+        <button class="nav-item" data-view="gallery">
+          <span class="nav-icon" aria-hidden="true">🖼️</span> Gallery
+        </button>
+        <button class="nav-item" data-view="services">
+          <span class="nav-icon" aria-hidden="true">💅</span> Services
+        </button>
+        <button class="nav-item" data-view="settings">
+          <span class="nav-icon" aria-hidden="true">⚙️</span> Settings
+        </button>
+        <button class="nav-item" data-view="audit">
+          <span class="nav-icon" aria-hidden="true">📝</span> Audit Log
+        </button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <a href="../index.html" class="nav-link-small" target="_blank" rel="noopener">
+          🌷 View website
+        </a>
+        <button class="btn-logout" id="logout-btn">🚪 Sign out</button>
+      </div>
+    </aside>
+
+    <!-- ── Mobile header ───────────────────────────────────────── -->
+    <header class="mobile-header">
+      <button class="hamburger" id="hamburger-btn" aria-label="Toggle navigation" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+      <span class="mobile-title" id="mobile-title">Dashboard</span>
+      <div class="mobile-logo">
+        <img src="../images/logo.png" alt="" aria-hidden="true" width="28" height="28" />
+      </div>
+    </header>
+
+    <!-- ── Sidebar overlay (mobile) ────────────────────────────── -->
+    <div class="sidebar-overlay" id="sidebar-overlay" aria-hidden="true"></div>
+
+    <!-- ── Main content ─────────────────────────────────────────── -->
+    <main class="main-content" id="main-content">
+
+      <!-- ═══════════════════════════════════════════════════════ -->
+      <!--  DASHBOARD VIEW                                         -->
+      <!-- ═══════════════════════════════════════════════════════ -->
+      <section class="view" id="view-dashboard">
+        <div class="page-header">
+          <h2 class="page-title">Dashboard</h2>
+          <p class="page-sub" id="dash-date"></p>
+        </div>
+
+        <div class="stats-grid" id="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon" aria-hidden="true">📅</div>
+            <div class="stat-body">
+              <div class="stat-value" id="stat-total">—</div>
+              <div class="stat-label">Total Appointments</div>
+            </div>
+          </div>
+          <div class="stat-card pending">
+            <div class="stat-icon" aria-hidden="true">⏳</div>
+            <div class="stat-body">
+              <div class="stat-value" id="stat-pending">—</div>
+              <div class="stat-label">Pending</div>
+            </div>
+          </div>
+          <div class="stat-card confirmed">
+            <div class="stat-icon" aria-hidden="true">✅</div>
+            <div class="stat-body">
+              <div class="stat-value" id="stat-confirmed">—</div>
+              <div class="stat-label">Confirmed</div>
+            </div>
+          </div>
+          <div class="stat-card upcoming">
+            <div class="stat-icon" aria-hidden="true">🔮</div>
+            <div class="stat-body">
+              <div class="stat-value" id="stat-upcoming">—</div>
+              <div class="stat-label">Upcoming (7 days)</div>
+            </div>
+          </div>
+          <div class="stat-card gallery-stat">
+            <div class="stat-icon" aria-hidden="true">🖼️</div>
+            <div class="stat-body">
+              <div class="stat-value" id="stat-gallery">—</div>
+              <div class="stat-label">Gallery Photos</div>
+            </div>
+          </div>
+          <div class="stat-card services-stat">
+            <div class="stat-icon" aria-hidden="true">💅</div>
+            <div class="stat-body">
+              <div class="stat-value" id="stat-services">—</div>
+              <div class="stat-label">Active Services</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section-header">
+          <h3 class="section-title">Recent Appointments</h3>
+          <button class="btn-text" data-view="appointments">View all →</button>
+        </div>
+        <div id="recent-appointments"></div>
+      </section>
+
+      <!-- ═══════════════════════════════════════════════════════ -->
+      <!--  APPOINTMENTS VIEW                                       -->
+      <!-- ═══════════════════════════════════════════════════════ -->
+      <section class="view" id="view-appointments" style="display:none">
+        <div class="page-header">
+          <h2 class="page-title">Appointments</h2>
+        </div>
+
+        <!-- Filters -->
+        <div class="filter-bar">
+          <div class="filter-group">
+            <label for="filter-status" class="filter-label">Status</label>
+            <select id="filter-status" class="filter-select">
+              <option value="ALL">All</option>
+              <option value="PENDING" selected>Pending</option>
+              <option value="CONFIRMED">Confirmed</option>
+              <option value="DECLINED">Declined</option>
+              <option value="COMPLETED">Completed</option>
+              <option value="CANCELLED">Cancelled</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label for="filter-search" class="filter-label">Search</label>
+            <input type="text" id="filter-search" class="filter-input" placeholder="Name, phone, service…" />
+          </div>
+          <div class="filter-group">
+            <label for="filter-date" class="filter-label">Date from</label>
+            <input type="date" id="filter-date" class="filter-input" />
+          </div>
+          <button class="btn-secondary" id="filter-reset">Clear</button>
+        </div>
+
+        <div id="appointments-list" class="appointments-list"></div>
+      </section>
+
+      <!-- ═══════════════════════════════════════════════════════ -->
+      <!--  GALLERY VIEW                                           -->
+      <!-- ═══════════════════════════════════════════════════════ -->
+      <section class="view" id="view-gallery" style="display:none">
+        <div class="page-header">
+          <h2 class="page-title">Gallery</h2>
+          <label class="btn-primary upload-label" for="gallery-file-input">
+            + Upload Photos
+          </label>
+          <input
+            type="file"
+            id="gallery-file-input"
+            accept="image/jpeg,image/png,image/webp,image/avif"
+            multiple
+            style="display:none"
+            aria-label="Upload gallery photos" />
+        </div>
+
+        <div id="upload-progress" class="upload-progress" style="display:none">
+          <div class="progress-bar"><div class="progress-fill" id="upload-fill"></div></div>
+          <p id="upload-status-text"></p>
+        </div>
+
+        <div id="gallery-grid-admin" class="gallery-grid-admin"></div>
+      </section>
+
+      <!-- ═══════════════════════════════════════════════════════ -->
+      <!--  SERVICES VIEW                                          -->
+      <!-- ═══════════════════════════════════════════════════════ -->
+      <section class="view" id="view-services" style="display:none">
+        <div class="page-header">
+          <h2 class="page-title">Services</h2>
+          <button class="btn-primary" id="add-service-btn">+ Add Service</button>
+        </div>
+        <div id="services-list" class="services-list"></div>
+      </section>
+
+      <!-- ═══════════════════════════════════════════════════════ -->
+      <!--  SETTINGS VIEW                                          -->
+      <!-- ═══════════════════════════════════════════════════════ -->
+      <section class="view" id="view-settings" style="display:none">
+        <div class="page-header">
+          <h2 class="page-title">Business Settings</h2>
+        </div>
+        <form id="settings-form" class="settings-form" novalidate>
+          <div class="settings-card">
+            <h3 class="settings-card-title">Business Info</h3>
+            <div class="settings-row">
+              <div class="settings-field">
+                <label for="s-name">Studio Name</label>
+                <input type="text" id="s-name" name="name" autocomplete="organization" />
+              </div>
+              <div class="settings-field">
+                <label for="s-email">Contact Email</label>
+                <input type="email" id="s-email" name="email" autocomplete="email" />
+              </div>
+            </div>
+            <div class="settings-row">
+              <div class="settings-field">
+                <label for="s-instagram">Instagram URL</label>
+                <input type="url" id="s-instagram" name="instagram" />
+              </div>
+              <div class="settings-field">
+                <label for="s-whatsapp">WhatsApp Number</label>
+                <input type="tel" id="s-whatsapp" name="whatsapp" placeholder="+91XXXXXXXXXX" inputmode="tel" />
+              </div>
+            </div>
+          </div>
+
+          <div class="settings-card">
+            <h3 class="settings-card-title">Booking Rules</h3>
+            <div class="settings-row">
+              <div class="settings-field">
+                <label for="s-min-days">Min advance notice (days)</label>
+                <input type="number" id="s-min-days" name="advance_days_min" min="0" max="30" />
+              </div>
+              <div class="settings-field">
+                <label for="s-max-days">Max booking window (days)</label>
+                <input type="number" id="s-max-days" name="advance_days_max" min="1" max="365" />
+              </div>
+            </div>
+            <div class="settings-row">
+              <div class="settings-field">
+                <label for="s-open">Business hours open</label>
+                <input type="time" id="s-open" name="business_hours_start" />
+              </div>
+              <div class="settings-field">
+                <label for="s-close">Business hours close</label>
+                <input type="time" id="s-close" name="business_hours_end" />
+              </div>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" class="btn-primary">Save Settings</button>
+            <span class="settings-status" id="settings-status" role="status" aria-live="polite"></span>
+          </div>
+        </form>
+      </section>
+
+      <!-- ═══════════════════════════════════════════════════════ -->
+      <!--  AUDIT LOG VIEW                                         -->
+      <!-- ═══════════════════════════════════════════════════════ -->
+      <section class="view" id="view-audit" style="display:none">
+        <div class="page-header">
+          <h2 class="page-title">Audit Log</h2>
+          <button class="btn-secondary" id="audit-refresh">Refresh</button>
+        </div>
+        <div id="audit-list" class="audit-list"></div>
+      </section>
+
+    </main><!-- /.main-content -->
+
+  </div><!-- /#app -->
+
+  <!-- ─── Modals ──────────────────────────────────────────────── -->
+
+  <!-- Appointment Detail Modal -->
+  <div class="modal-overlay" id="appt-modal-overlay" aria-modal="true" role="dialog" aria-labelledby="appt-modal-title" style="display:none">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="appt-modal-title">Appointment Details</h3>
+        <button class="modal-close" id="appt-modal-close" aria-label="Close">✕</button>
+      </div>
+      <div class="modal-body" id="appt-modal-body"></div>
+      <div class="modal-footer" id="appt-modal-footer"></div>
+    </div>
+  </div>
+
+  <!-- Confirm Dialog -->
+  <div class="modal-overlay" id="confirm-overlay" aria-modal="true" role="alertdialog" aria-labelledby="confirm-title" style="display:none">
+    <div class="modal modal-sm">
+      <div class="modal-header">
+        <h3 id="confirm-title">Confirm Action</h3>
+      </div>
+      <div class="modal-body">
+        <p id="confirm-message"></p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" id="confirm-cancel">Cancel</button>
+        <button class="btn-danger" id="confirm-ok">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Service Edit Modal -->
+  <div class="modal-overlay" id="service-modal-overlay" aria-modal="true" role="dialog" aria-labelledby="service-modal-title" style="display:none">
+    <div class="modal modal-sm">
+      <div class="modal-header">
+        <h3 id="service-modal-title">Edit Service</h3>
+        <button class="modal-close" id="service-modal-close" aria-label="Close">✕</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="service-edit-id" />
+        <div class="form-group-modal">
+          <label for="service-edit-name">Service Name</label>
+          <input type="text" id="service-edit-name" maxlength="100" />
+        </div>
+        <div class="form-group-modal">
+          <label for="service-edit-desc">Description</label>
+          <textarea id="service-edit-desc" rows="3" maxlength="500"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" id="service-modal-cancel">Cancel</button>
+        <button class="btn-primary" id="service-modal-save">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Gallery item edit modal -->
+  <div class="modal-overlay" id="gallery-modal-overlay" aria-modal="true" role="dialog" aria-labelledby="gallery-modal-title" style="display:none">
+    <div class="modal modal-sm">
+      <div class="modal-header">
+        <h3 id="gallery-modal-title">Edit Photo</h3>
+        <button class="modal-close" id="gallery-modal-close" aria-label="Close">✕</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="gallery-edit-id" />
+        <img id="gallery-edit-preview" src="" alt="Preview" style="width:100%;border-radius:10px;margin-bottom:14px;max-height:200px;object-fit:cover;" />
+        <div class="form-group-modal">
+          <label for="gallery-edit-alt">Alt Text (for accessibility &amp; SEO)</label>
+          <input type="text" id="gallery-edit-alt" maxlength="200" placeholder="Describe the nail art" />
+        </div>
+        <div class="form-group-modal">
+          <label for="gallery-edit-title">Title (optional)</label>
+          <input type="text" id="gallery-edit-title" maxlength="100" />
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" id="gallery-modal-cancel">Cancel</button>
+        <button class="btn-primary" id="gallery-modal-save">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast notification -->
+  <div id="toast" class="toast" role="status" aria-live="polite" aria-atomic="true"></div>
+
+  <!-- ─── Supabase + Admin JS ──────────────────────────────────── -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/dashboard.js"></script>
+
+</body>
+</html>

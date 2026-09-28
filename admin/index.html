@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Admin Login — Floralyn</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Poppins', sans-serif;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #1b1118 0%, #2a182b 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .login-card {
+      background: rgba(255,255,255,0.05);
+      border: 1.5px solid rgba(255,255,255,0.12);
+      border-radius: 20px;
+      backdrop-filter: blur(12px);
+      padding: 40px 36px;
+      width: 100%;
+      max-width: 400px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+    }
+
+    .login-logo {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+
+    .login-logo-mark {
+      width: 64px;
+      height: 64px;
+      background: linear-gradient(135deg, #F2D6F3, #F9E6F0);
+      border-radius: 18px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 12px;
+      box-shadow: 0 8px 24px rgba(164,125,196,0.3);
+    }
+
+    .login-logo-mark img {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      object-fit: cover;
+    }
+
+    .login-logo h1 {
+      font-size: 22px;
+      color: #EBDCFD;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+
+    .login-logo p {
+      font-size: 13px;
+      color: #a89bc2;
+      margin-top: 2px;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 13px;
+      color: #c9b0e8;
+      font-weight: 500;
+      margin-bottom: 6px;
+    }
+
+    .form-group input {
+      width: 100%;
+      background: rgba(255,255,255,0.08);
+      border: 1.5px solid rgba(255,255,255,0.15);
+      border-radius: 10px;
+      color: #f9eaff;
+      font-size: 15px;
+      font-family: 'Poppins', sans-serif;
+      padding: 12px 14px;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .form-group input:focus {
+      outline: none;
+      border-color: #c993ff;
+      box-shadow: 0 0 0 3px rgba(201,147,255,0.18);
+    }
+
+    .btn-login {
+      width: 100%;
+      background: linear-gradient(90deg, #c993ff, #f8a3d1);
+      border: none;
+      border-radius: 12px;
+      color: #fff;
+      font-family: 'Poppins', sans-serif;
+      font-size: 15px;
+      font-weight: 600;
+      padding: 14px;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.2s;
+      margin-top: 8px;
+      min-height: 48px;
+    }
+
+    .btn-login:hover:not(:disabled) { opacity: 0.9; transform: translateY(-1px); }
+    .btn-login:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    .login-error {
+      background: rgba(192,57,43,0.2);
+      border: 1px solid rgba(192,57,43,0.4);
+      border-radius: 8px;
+      color: #f5b7b1;
+      font-size: 13px;
+      padding: 10px 12px;
+      margin-top: 14px;
+      display: none;
+    }
+
+    .back-link {
+      text-align: center;
+      margin-top: 20px;
+    }
+
+    .back-link a {
+      color: #a89bc2;
+      font-size: 13px;
+      text-decoration: none;
+    }
+
+    .back-link a:hover { color: #EBDCFD; text-decoration: underline; }
+
+    /* Config warning (shown when Supabase isn't configured) */
+    .config-warning {
+      background: rgba(230,126,34,0.15);
+      border: 1px solid rgba(230,126,34,0.4);
+      border-radius: 10px;
+      color: #f0b27a;
+      font-size: 13px;
+      padding: 14px;
+      margin-bottom: 20px;
+      line-height: 1.6;
+      display: none;
+    }
+
+    .config-warning code {
+      background: rgba(255,255,255,0.1);
+      border-radius: 4px;
+      padding: 1px 5px;
+      font-family: monospace;
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="login-logo-mark">
+        <img src="../images/logo.png" alt="Floralyn" width="48" height="48" />
+      </div>
+      <h1>Floralyn Admin</h1>
+      <p>Studio management dashboard</p>
+    </div>
+
+    <div class="config-warning" id="config-warning">
+      ⚠️ <strong>Setup required.</strong> Please open <code>admin/js/dashboard.js</code> and replace
+      <code>YOUR_SUPABASE_URL</code> and <code>YOUR_SUPABASE_ANON_KEY</code> with your Supabase project credentials.
+      See <code>.env.example</code> for instructions.
+    </div>
+
+    <form id="login-form" novalidate>
+      <div class="form-group">
+        <label for="login-email">Email</label>
+        <input
+          type="email"
+          id="login-email"
+          name="email"
+          placeholder="owner@example.com"
+          autocomplete="email"
+          inputmode="email"
+          required />
+      </div>
+
+      <div class="form-group">
+        <label for="login-password">Password</label>
+        <input
+          type="password"
+          id="login-password"
+          name="password"
+          placeholder="Your password"
+          autocomplete="current-password"
+          required />
+      </div>
+
+      <button type="submit" class="btn-login" id="login-btn">Sign In</button>
+
+      <div class="login-error" id="login-error" role="alert" aria-live="assertive"></div>
+    </form>
+
+    <div class="back-link">
+      <a href="../index.html">← Back to website</a>
+    </div>
+  </div>
+
+  <!-- Supabase JS client -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/dashboard.js"></script>
+  <script>
+    // Login page logic — uses the FloralynAdmin class from dashboard.js
+    document.addEventListener('DOMContentLoaded', async function () {
+      const { SUPABASE_URL, SUPABASE_ANON_KEY } = window.FloralynConfig || {};
+
+      if (!SUPABASE_URL || SUPABASE_URL === 'YOUR_SUPABASE_URL') {
+        document.getElementById('config-warning').style.display = 'block';
+        document.getElementById('login-btn').disabled = true;
+        return;
+      }
+
+      const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+      // If already authenticated, go to dashboard
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        window.location.href = 'dashboard.html';
+        return;
+      }
+
+      const form    = document.getElementById('login-form');
+      const btn     = document.getElementById('login-btn');
+      const errEl   = document.getElementById('login-error');
+
+      form.addEventListener('submit', async function (e) {
+        e.preventDefault();
+
+        const email    = document.getElementById('login-email').value.trim();
+        const password = document.getElementById('login-password').value;
+
+        if (!email || !password) {
+          errEl.textContent = 'Please enter your email and password.';
+          errEl.style.display = 'block';
+          return;
+        }
+
+        btn.disabled = true;
+        btn.textContent = 'Signing in…';
+        errEl.style.display = 'none';
+
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
+
+        if (error) {
+          // Generic message — never expose Supabase error details
+          errEl.textContent = 'Invalid email or password. Please try again.';
+          errEl.style.display = 'block';
+          btn.disabled = false;
+          btn.textContent = 'Sign In';
+        } else {
+          window.location.href = 'dashboard.html';
+        }
+      });
+    });
+  </script>
+
+</body>
+</html>

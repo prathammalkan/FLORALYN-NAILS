@@ -1,0 +1,19 @@
+{
+  "name": "floralyn",
+  "version": "1.0.0",
+  "description": "Floralyn Nail Art Studio — appointment booking website",
+  "private": true,
+  "dependencies": {
+    "@supabase/supabase-js": "^2.45.0",
+    "twilio": "^5.3.4"
+  },
+  "devDependencies": {
+    "sharp": "^0.33.5"
+  },
+  "scripts": {
+    "compress-images": "node scripts/compress-images.js"
+  },
+  "engines": {
+    "node": ">=18.x"
+  }
+}
