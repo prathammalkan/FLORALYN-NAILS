@@ -189,7 +189,7 @@ module.exports = async function handler(req, res) {
   // ── 2. Twilio WhatsApp (non-fatal) ────────────────────────────
   const twilioSid  = process.env.TWILIO_ACCOUNT_SID;
   const twilioAuth = process.env.TWILIO_AUTH_TOKEN;
-  const fromWa     = process.env.TWILIO_WHATSAPP_FROM || 'whatsapp:+14155238886';
+  const fromWa     = process.env.TWILIO_WHATSAPP_FROM || 'whatsapp:+17372508034';
   const toWa       = process.env.DEST_WHATSAPP_TO;
   let   waSent     = false;
 
@@ -228,7 +228,7 @@ module.exports = async function handler(req, res) {
     try {
       const resend = new Resend(resendKey);
       await resend.emails.send({
-        from:    'Floralyn Bookings <bookings@resend.dev>',
+        from:    'Floralyn Bookings <onboarding@resend.dev>',
         to:      ownerEmail,
         subject: `💅 New Appointment: ${from_name} — ${service}`,
         html:    buildEmailHtml(data),
