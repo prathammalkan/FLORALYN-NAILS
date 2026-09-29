@@ -24,9 +24,9 @@ document.addEventListener('DOMContentLoaded', () => {
   initDrawer();
   initFloatBtn();
   initReveal();
-  initPickers();
+  initCustomPickers();
   initGallery();
-  initForm();   // initMultiStep is called inside initForm
+  initForm();
 });
 
 /* ── EmailJS ─────────────────────────────────────────────────── */
@@ -113,41 +113,120 @@ function initReveal() {
   els.forEach(el => io.observe(el));
 }
 
-/* ── Flatpickr date + time pickers ──────────────────────────── */
-function initPickers() {
-  if (typeof flatpickr === 'undefined') {
-    setTimeout(initPickers, 300);
-    return;
-  }
-  const tomorrow = new Date();
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  tomorrow.setHours(0, 0, 0, 0);
-  const maxDate = new Date();
-  maxDate.setDate(maxDate.getDate() + 90);
+/* ── Custom Date + Time pickers ─────────────────────────────── */
+function initCustomPickers() {
+  /* ─── Date picker ─────────────────────────────────────────── */
+  const cdpGrid  = document.getElementById('cdp-grid');
+  const cdpLabel = document.getElementById('cdp-month');
+  const cdpPrev  = document.getElementById('cdp-prev');
+  const cdpNext  = document.getElementById('cdp-next');
+  const fdateEl  = document.getElementById('fdate');
+  if (!cdpGrid || !fdateEl) return;
 
-  const de = document.getElementById('fdate');
-  if (de && !de._flatpickr) {
-    flatpickr(de, {
-      minDate: tomorrow,
-      maxDate,
-      dateFormat: 'D, d M Y',
-      disableMobile: false,
-      disable: [d => d.getDay() === 0], // no Sundays
-    });
+  const MONTH_NAMES = ['January','February','March','April','May','June',
+                       'July','August','September','October','November','December'];
+
+  // Limits: tomorrow → 90 days out
+  const now      = new Date(); now.setHours(0,0,0,0);
+  const tomorrow = new Date(now); tomorrow.setDate(tomorrow.getDate() + 1);
+  const maxDate  = new Date(now); maxDate.setDate(maxDate.getDate() + 90);
+
+  let view     = new Date(tomorrow.getFullYear(), tomorrow.getMonth(), 1);
+  let selDate  = null;
+
+  function fmtDate(d) {
+    const days  = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    const months= ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    return `${days[d.getDay()]}, ${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
   }
 
-  const te = document.getElementById('ftime');
-  if (te && !te._flatpickr) {
-    flatpickr(te, {
-      enableTime: true,
-      noCalendar: true,
-      dateFormat: 'h:i K',
-      minTime: '10:00',
-      maxTime: '19:00',
-      minuteIncrement: 30,
-      disableMobile: false,
-    });
+  function render() {
+    const y = view.getFullYear(), m = view.getMonth();
+    if (cdpLabel) cdpLabel.textContent = `${MONTH_NAMES[m]} ${y}`;
+
+    // Prev arrow disabled if already at min month
+    if (cdpPrev) cdpPrev.disabled = (y === tomorrow.getFullYear() && m <= tomorrow.getMonth());
+    // Next arrow disabled if beyond max month
+    if (cdpNext) {
+      const maxY = maxDate.getFullYear(), maxM = maxDate.getMonth();
+      cdpNext.disabled = (y > maxY || (y === maxY && m >= maxM));
+    }
+
+    cdpGrid.innerHTML = '';
+    const firstDow   = new Date(y, m, 1).getDay();   // 0=Sun
+    const daysInMonth= new Date(y, m + 1, 0).getDate();
+
+    // Empty leading cells
+    for (let i = 0; i < firstDow; i++) {
+      const sp = document.createElement('span');
+      sp.className = 'cdp-day cdp-other';
+      sp.setAttribute('aria-hidden', 'true');
+      cdpGrid.appendChild(sp);
+    }
+
+    for (let d = 1; d <= daysInMonth; d++) {
+      const date = new Date(y, m, d);
+      const isSun  = date.getDay() === 0;
+      const isPast = date < tomorrow;
+      const isMax  = date > maxDate;
+      const isTod  = date.getTime() === now.getTime();
+      const isSel  = selDate && date.getTime() === selDate.getTime();
+
+      const btn = document.createElement('button');
+      btn.type      = 'button';
+      btn.className = 'cdp-day' +
+        (isTod ? ' cdp-today' : '') +
+        (isSel ? ' cdp-sel'   : '');
+      btn.textContent = String(d);
+      btn.setAttribute('role', 'gridcell');
+      btn.setAttribute('aria-label', fmtDate(date));
+
+      if (isSun || isPast || isMax) {
+        btn.disabled = true;
+        btn.setAttribute('aria-disabled', 'true');
+      } else {
+        btn.addEventListener('click', () => {
+          selDate = date;
+          fdateEl.value = fmtDate(date);
+          render(); // re-render to update .cdp-sel
+        });
+      }
+      cdpGrid.appendChild(btn);
+    }
   }
+
+  cdpPrev?.addEventListener('click', () => { view.setMonth(view.getMonth() - 1); render(); });
+  cdpNext?.addEventListener('click', () => { view.setMonth(view.getMonth() + 1); render(); });
+  render();
+
+  /* ─── Time slot picker ────────────────────────────────────── */
+  const SLOT_GROUPS = [
+    { id: 'ctp-am',  slots: ['10:00 AM','10:30 AM','11:00 AM','11:30 AM'] },
+    { id: 'ctp-pm',  slots: ['12:00 PM','12:30 PM','1:00 PM','1:30 PM','2:00 PM','2:30 PM','3:00 PM','3:30 PM'] },
+    { id: 'ctp-eve', slots: ['4:00 PM','4:30 PM','5:00 PM','5:30 PM','6:00 PM','6:30 PM'] },
+  ];
+  const ftimeEl = document.getElementById('ftime');
+  if (!ftimeEl) return;
+
+  let allSlots = [];
+
+  SLOT_GROUPS.forEach(({ id, slots }) => {
+    const container = document.getElementById(id);
+    if (!container) return;
+    slots.forEach(time => {
+      const btn = document.createElement('button');
+      btn.type      = 'button';
+      btn.className = 'ctp-slot';
+      btn.textContent = time;
+      btn.addEventListener('click', () => {
+        allSlots.forEach(s => s.classList.remove('ctp-sel'));
+        btn.classList.add('ctp-sel');
+        ftimeEl.value = time;
+      });
+      container.appendChild(btn);
+      allSlots.push(btn);
+    });
+  });
 }
 
 /* ── Gallery + Lightbox ──────────────────────────────────────── */

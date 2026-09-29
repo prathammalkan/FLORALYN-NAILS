@@ -18,9 +18,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" />
   <link rel="stylesheet" href="style.css" />
-  <script src="https://cdn.jsdelivr.net/npm/flatpickr" defer></script>
 </head>
 <body>
 
@@ -340,21 +338,43 @@
             <div class="step-hd">
               <div class="step-emoji" aria-hidden="true">📅</div>
               <h3>Pick your slot</h3>
-              <p>Choose your preferred date and time</p>
+              <p>When would you like to come in?</p>
             </div>
 
-            <div class="f-row">
-              <div class="f-field">
-                <label for="fdate">Date <span aria-hidden="true">*</span></label>
-                <input type="text" id="fdate" name="date"
-                  placeholder="Pick a date" readonly aria-required="true" />
+            <!-- Custom inline calendar -->
+            <div class="cdp" id="cdp" role="group" aria-label="Select appointment date">
+              <div class="cdp-head">
+                <button type="button" class="cdp-nav" id="cdp-prev" aria-label="Previous month">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+                </button>
+                <span class="cdp-month" id="cdp-month"></span>
+                <button type="button" class="cdp-nav" id="cdp-next" aria-label="Next month">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+                </button>
               </div>
-              <div class="f-field">
-                <label for="ftime">Time <span aria-hidden="true">*</span></label>
-                <input type="text" id="ftime" name="time"
-                  placeholder="Pick a time" readonly aria-required="true" />
+              <div class="cdp-dow" aria-hidden="true">
+                <span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span>
+              </div>
+              <div class="cdp-grid" id="cdp-grid" role="grid"></div>
+            </div>
+            <input type="hidden" id="fdate" name="date" aria-required="true" />
+
+            <!-- Custom time slot chips -->
+            <div class="ctp" id="ctp" role="group" aria-label="Select appointment time">
+              <div class="ctp-group">
+                <span class="ctp-label">🌞 Morning</span>
+                <div class="ctp-slots" id="ctp-am"></div>
+              </div>
+              <div class="ctp-group">
+                <span class="ctp-label">☀️ Afternoon</span>
+                <div class="ctp-slots" id="ctp-pm"></div>
+              </div>
+              <div class="ctp-group">
+                <span class="ctp-label">🌆 Evening</span>
+                <div class="ctp-slots" id="ctp-eve"></div>
               </div>
             </div>
+            <input type="hidden" id="ftime" name="time" aria-required="true" />
 
             <div class="step-nav">
               <button type="button" class="btn-back" data-back="0">← Back</button>
