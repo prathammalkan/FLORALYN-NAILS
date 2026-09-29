@@ -166,44 +166,56 @@ module.exports = async function handler(req, res) {
   // ── 2. Twilio WhatsApp (non-fatal) ────────────────────────────
   const tSid  = process.env.TWILIO_ACCOUNT_SID;
   const tAuth = process.env.TWILIO_AUTH_TOKEN;
-  const tFrom = (process.env.TWILIO_WHATSAPP_FROM || '+17372508034').replace(/^whatsapp:/, '');
-  const tTo   = (process.env.DEST_WHATSAPP_TO   || '').replace(/^whatsapp:/, '');
+  const tFrom = `whatsapp:${(process.env.TWILIO_WHATSAPP_FROM || '+17372508034').replace(/^whatsapp:/, '')}`;
+  const tTo   = process.env.DEST_WHATSAPP_TO
+    ? `whatsapp:${process.env.DEST_WHATSAPP_TO.replace(/^whatsapp:/, '')}`
+    : null;
+
+  // Full booking details message
+  const waBody =
+    `💅 *New Booking — Floralyn*\n\n` +
+    `👤 *Name:* ${from_name}\n` +
+    `📞 *Phone:* ${phone}\n` +
+    `📅 *Date:* ${date}\n` +
+    `⏰ *Time:* ${time}\n` +
+    `💎 *Service:* ${normService}` +
+    (message ? `\n💬 *Note:* ${message}` : '') +
+    `\n\n_Floralyn booking form 🌸_`;
 
   if (tSid && tAuth && tTo) {
     try {
       const client = twilio(tSid, tAuth);
-      const waBody =
-        `💅 *New Floralyn Booking*\n\n` +
-        `👤 ${from_name}\n` +
-        `📞 ${phone}\n` +
-        `📅 ${date} at ${time}\n` +
-        `💎 ${normService}` +
-        (message ? `\n💬 ${message}` : '');
 
+      // Attempt 1 ── free-form body (works when a 24h session is open)
       try {
-        // Attempt 1: free-form body (works if recipient has an active session)
-        await client.messages.create({
-          from: `whatsapp:${tFrom}`,
-          to:   `whatsapp:${tTo}`,
-          body: waBody,
-        });
+        await client.messages.create({ from: tFrom, to: tTo, body: waBody });
         results.whatsapp = true;
       } catch (e1) {
         results.waErrCode = e1.code;
-        console.error('[Twilio] body failed:', e1.code, e1.message);
+        console.error('[Twilio] free-form failed:', e1.code, e1.message);
 
-        // Attempt 2: ContentSid template (if TWILIO_CONTENT_SID is set)
+        // Attempt 2 ── ContentSid template to open the session
         const cSid = process.env.TWILIO_CONTENT_SID;
         if (cSid) {
           try {
             await client.messages.create({
-              from: `whatsapp:${tFrom}`,
-              to:   `whatsapp:${tTo}`,
+              from: tFrom, to: tTo,
               contentSid: cSid,
-              contentVariables: JSON.stringify({ '1': from_name, '2': date, '3': time, '4': normService, '5': phone }),
+              contentVariables: JSON.stringify({
+                '1': from_name, '2': phone,
+                '3': date,      '4': time,
+                '5': normService,
+              }),
             });
             results.whatsapp = true;
-            results.waErrCode = null;
+
+            // Attempt 3 ── follow-up free-form with full details right after template
+            // Template opens the session so free-form should now deliver
+            try {
+              await new Promise(r => setTimeout(r, 800));
+              await client.messages.create({ from: tFrom, to: tTo, body: waBody });
+            } catch (_) { /* non-critical, template already sent */ }
+
           } catch (e2) {
             results.waErrCode = e2.code;
             results.waErrMsg  = e2.message;
@@ -213,7 +225,11 @@ module.exports = async function handler(req, res) {
           results.waErrMsg = e1.message;
         }
       }
-    } catch (e) { results.waErrCode = 'INIT'; results.waErrMsg = e.message; console.error('[Twilio]', e.message); }
+    } catch (e) {
+      results.waErrCode = 'INIT';
+      results.waErrMsg  = e.message;
+      console.error('[Twilio]', e.message);
+    }
   }
 
   // ── 3. Resend Email (non-fatal) ───────────────────────────────
