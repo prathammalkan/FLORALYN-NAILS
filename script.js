@@ -1,243 +1,236 @@
 'use strict';
 
-// ── Boot time (bot protection) ────────────────────────────────
-const PAGE_LOAD_TIME  = Date.now();
-const MIN_FILL_MS     = 3000;
-const EMAILJS_PUB_KEY = 'snAKDj3jg8ZKWcxY_';
-const EMAILJS_SVC_ID  = 'service_bm9h6wp';
-const EMAILJS_TPL_ID  = 'template_v5hjt9o';
+const LOAD_AT      = Date.now();
+const MIN_FILL_MS  = 2500;
+const EJS_KEY      = 'snAKDj3jg8ZKWcxY_';
+const EJS_SVC      = 'service_bm9h6wp';
+const EJS_TPL      = 'template_v5hjt9o';
 
-document.addEventListener('DOMContentLoaded', function () {
+document.addEventListener('DOMContentLoaded', () => {
   initEmailJS();
   initTheme();
-  initStickyHeader();
-  initMobileNav();
-  initFloatingCTA();
-  initScrollReveal();
+  initHeader();
+  initDrawer();
+  initFloatBtn();
+  initReveal();
   initPickers();
-  initGalleryLightbox();
+  initGallery();
   initForm();
 });
 
-// ── EmailJS ───────────────────────────────────────────────────
+/* ── EmailJS ─────────────────────────────────────────────────── */
 function initEmailJS() {
-  if (window.emailjs) emailjs.init(EMAILJS_PUB_KEY);
+  if (window.emailjs) emailjs.init(EJS_KEY);
 }
 
-// ── Theme ─────────────────────────────────────────────────────
+/* ── Theme ───────────────────────────────────────────────────── */
 function initTheme() {
-  const sw = document.getElementById('theme-switch');
-  if (!sw) return;
-
-  const stored     = localStorage.getItem('theme');
-  const preferDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-  const isDark     = stored ? stored === 'dark' : preferDark;
-
-  if (isDark) { document.body.classList.add('dark-mode'); sw.checked = true; }
-
-  sw.addEventListener('change', function () {
-    document.body.classList.toggle('dark-mode', sw.checked);
-    localStorage.setItem('theme', sw.checked ? 'dark' : 'light');
+  const cb = document.getElementById('dm');
+  if (!cb) return;
+  const stored = localStorage.getItem('flTheme');
+  const dark   = stored ? stored === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches;
+  if (dark) { document.body.classList.add('dark'); cb.checked = true; }
+  cb.addEventListener('change', () => {
+    document.body.classList.toggle('dark', cb.checked);
+    localStorage.setItem('flTheme', cb.checked ? 'dark' : 'light');
   });
 }
 
-// ── Sticky Header ─────────────────────────────────────────────
-function initStickyHeader() {
-  const h = document.getElementById('site-header');
+/* ── Sticky Header ───────────────────────────────────────────── */
+function initHeader() {
+  const h = document.getElementById('hdr');
   if (!h) return;
-  const update = () => h.classList.toggle('scrolled', window.scrollY > 20);
-  window.addEventListener('scroll', update, { passive: true });
-  update();
+  const fn = () => h.classList.toggle('scrolled', window.scrollY > 16);
+  window.addEventListener('scroll', fn, { passive: true });
+  fn();
 }
 
-// ── Mobile Nav ────────────────────────────────────────────────
-function initMobileNav() {
-  const btn     = document.getElementById('hamburger');
-  const nav     = document.getElementById('mobile-nav');
-  const overlay = document.getElementById('mob-overlay');
-  const closeB  = document.getElementById('mobile-nav-close');
-  if (!btn || !nav) return;
+/* ── Mobile Drawer ───────────────────────────────────────────── */
+function initDrawer() {
+  const burger = document.getElementById('burger');
+  const drawer = document.getElementById('drawer');
+  const drover = document.getElementById('drover');
+  const close  = document.getElementById('drawer-close');
+  if (!burger || !drawer) return;
 
-  function open() {
-    nav.classList.add('open');
-    nav.removeAttribute('aria-hidden');
-    overlay.classList.add('visible');
-    btn.classList.add('open');
-    btn.setAttribute('aria-expanded', 'true');
-    btn.setAttribute('aria-label', 'Close navigation menu');
-  }
+  const open = () => {
+    drawer.classList.add('open');
+    drover.classList.add('on');
+    drawer.removeAttribute('aria-hidden');
+    burger.setAttribute('aria-expanded', 'true');
+    burger.setAttribute('aria-label', 'Close menu');
+    burger.classList.add('open');
+  };
+  const shut = () => {
+    drawer.classList.remove('open');
+    drover.classList.remove('on');
+    drawer.setAttribute('aria-hidden', 'true');
+    burger.setAttribute('aria-expanded', 'false');
+    burger.setAttribute('aria-label', 'Open menu');
+    burger.classList.remove('open');
+  };
 
-  function close() {
-    nav.classList.remove('open');
-    nav.setAttribute('aria-hidden', 'true');
-    overlay.classList.remove('visible');
-    btn.classList.remove('open');
-    btn.setAttribute('aria-expanded', 'false');
-    btn.setAttribute('aria-label', 'Open navigation menu');
-  }
-
-  btn.addEventListener('click',     () => nav.classList.contains('open') ? close() : open());
-  overlay.addEventListener('click', close);
-  closeB?.addEventListener('click', close);
-  nav.querySelectorAll('.mobile-nav-link').forEach(l => l.addEventListener('click', close));
-  document.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
+  burger.addEventListener('click', () => drawer.classList.contains('open') ? shut() : open());
+  drover.addEventListener('click', shut);
+  close?.addEventListener('click', shut);
+  drawer.querySelectorAll('.d-link').forEach(l => l.addEventListener('click', shut));
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') shut(); });
 }
 
-// ── Floating CTA ──────────────────────────────────────────────
-function initFloatingCTA() {
-  const cta  = document.getElementById('floating-cta');
+/* ── Floating CTA ────────────────────────────────────────────── */
+function initFloatBtn() {
+  const btn  = document.getElementById('fbtn');
   const hero = document.querySelector('.hero');
-  if (!cta || !hero) return;
-
+  if (!btn || !hero) return;
   new IntersectionObserver(
-    entries => cta.classList.toggle('visible', !entries[0].isIntersecting),
-    { threshold: 0.1 }
+    ([e]) => btn.classList.toggle('on', !e.isIntersecting),
+    { threshold: 0.08 }
   ).observe(hero);
 }
 
-// ── Scroll Reveal ─────────────────────────────────────────────
-function initScrollReveal() {
+/* ── Scroll Reveal ───────────────────────────────────────────── */
+function initReveal() {
   const els = document.querySelectorAll('.reveal');
   if (!els.length) return;
-
-  const obs = new IntersectionObserver(
+  const io = new IntersectionObserver(
     entries => entries.forEach(e => {
-      if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); }
+      if (e.isIntersecting) { e.target.classList.add('vis'); io.unobserve(e.target); }
     }),
-    { threshold: 0.1 }
+    { threshold: 0.08 }
   );
-
-  els.forEach(el => obs.observe(el));
+  els.forEach(el => io.observe(el));
 }
 
-// ── Flatpickr ─────────────────────────────────────────────────
+/* ── Flatpickr ───────────────────────────────────────────────── */
 function initPickers() {
   if (typeof flatpickr === 'undefined') { setTimeout(initPickers, 250); return; }
+  const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1);
+  const maxDate  = new Date(); maxDate.setDate(maxDate.getDate() + 90);
 
-  const tomorrow = new Date();
-  tomorrow.setDate(tomorrow.getDate() + 1);
+  const de = document.getElementById('fdate');
+  if (de) flatpickr(de, {
+    minDate: tomorrow, maxDate,
+    dateFormat: 'D, d M Y',
+    disableMobile: false,
+    disable: [d => d.getDay() === 0],
+  });
 
-  const maxDate = new Date();
-  maxDate.setDate(maxDate.getDate() + 90);
-
-  const dateEl = document.getElementById('date');
-  if (dateEl) {
-    flatpickr(dateEl, {
-      minDate: tomorrow,
-      maxDate,
-      dateFormat: 'D, d M Y',
-      disableMobile: false,
-      disable: [d => d.getDay() === 0], // no Sundays
-    });
-  }
-
-  const timeEl = document.getElementById('time');
-  if (timeEl) {
-    flatpickr(timeEl, {
-      enableTime:      true,
-      noCalendar:      true,
-      dateFormat:      'h:i K',
-      minTime:         '10:00',
-      maxTime:         '19:00',
-      minuteIncrement: 30,
-      disableMobile:   false,
-    });
-  }
+  const te = document.getElementById('ftime');
+  if (te) flatpickr(te, {
+    enableTime: true, noCalendar: true,
+    dateFormat: 'h:i K',
+    minTime: '10:00', maxTime: '19:00',
+    minuteIncrement: 30,
+    disableMobile: false,
+  });
 }
 
-// ── Gallery Lightbox ──────────────────────────────────────────
-function initGalleryLightbox() {
-  const lb    = document.getElementById('lightbox');
-  const lbImg = document.getElementById('lb-img');
-  const grid  = document.getElementById('gallery-grid');
-  if (!lb || !lbImg || !grid) return;
+/* ── Gallery + Lightbox ──────────────────────────────────────── */
+function initGallery() {
+  const grid  = document.getElementById('gal');
+  const lbox  = document.getElementById('lbox');
+  const limg  = document.getElementById('lb-img');
+  const lp    = document.getElementById('lb-p');
+  const ln    = document.getElementById('lb-n');
+  const lx    = document.getElementById('lb-x');
+  const dots  = document.getElementById('lb-dots');
+  if (!grid || !lbox || !limg) return;
 
-  const imgs = Array.from(grid.querySelectorAll('.gb-item img'));
-  let cur = 0;
+  const items = Array.from(grid.querySelectorAll('.g-item'));
+  const imgs  = items.map(el => el.querySelector('img'));
+  let cur = 0, touchX = 0;
+
+  /* Build dot indicators */
+  if (dots) {
+    imgs.forEach((_, i) => {
+      const d = document.createElement('div');
+      d.className = 'lb-dot' + (i === 0 ? ' act' : '');
+      dots.appendChild(d);
+    });
+  }
+
+  function updateDots() {
+    if (!dots) return;
+    dots.querySelectorAll('.lb-dot').forEach((d, i) =>
+      d.classList.toggle('act', i === cur)
+    );
+  }
 
   function show(i) {
     cur = (i + imgs.length) % imgs.length;
-    lbImg.src = imgs[cur].src;
-    lbImg.alt = imgs[cur].alt;
-    lb.removeAttribute('hidden');
+    limg.src = imgs[cur].src;
+    limg.alt = imgs[cur].alt;
+    updateDots();
+    lbox.removeAttribute('hidden');
     document.body.style.overflow = 'hidden';
-    document.getElementById('lb-close')?.focus();
   }
-
   function hide() {
-    lb.setAttribute('hidden', '');
+    lbox.setAttribute('hidden', '');
     document.body.style.overflow = '';
   }
 
-  // Open on image click
-  imgs.forEach((img, i) => {
-    img.parentElement.addEventListener('click', () => show(i));
-    img.parentElement.setAttribute('tabindex', '0');
-    img.parentElement.addEventListener('keydown', e => {
-      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); show(i); }
-    });
-  });
+  items.forEach(el => el.addEventListener('click', () => show(+el.dataset.i)));
+  lx?.addEventListener('click', hide);
+  lp?.addEventListener('click', () => show(cur - 1));
+  ln?.addEventListener('click', () => show(cur + 1));
+  lbox.addEventListener('click', e => { if (e.target === lbox) hide(); });
 
-  document.getElementById('lb-close')?.addEventListener('click', hide);
-  document.getElementById('lb-prev')?.addEventListener('click', () => show(cur - 1));
-  document.getElementById('lb-next')?.addEventListener('click', () => show(cur + 1));
-
-  lb.addEventListener('click', e => { if (e.target === lb) hide(); });
-
+  /* Keyboard */
   document.addEventListener('keydown', e => {
-    if (lb.hasAttribute('hidden')) return;
+    if (lbox.hasAttribute('hidden')) return;
     if (e.key === 'Escape')     hide();
     if (e.key === 'ArrowLeft')  show(cur - 1);
     if (e.key === 'ArrowRight') show(cur + 1);
   });
+
+  /* Touch swipe on lightbox */
+  lbox.addEventListener('touchstart', e => {
+    touchX = e.touches[0].clientX;
+  }, { passive: true });
+  lbox.addEventListener('touchend', e => {
+    const diff = touchX - e.changedTouches[0].clientX;
+    if (Math.abs(diff) > 45) show(cur + (diff > 0 ? 1 : -1));
+  }, { passive: true });
 }
 
-// ── Booking Form ──────────────────────────────────────────────
+/* ── Booking Form ────────────────────────────────────────────── */
 function initForm() {
-  const form     = document.getElementById('booking-form');
-  const statusEl = document.getElementById('form-status');
-  const submitEl = document.getElementById('submit-btn');
+  const form   = document.getElementById('bform');
+  const status = document.getElementById('fstatus');
+  const sbtn   = document.getElementById('sbtn');
   if (!form) return;
 
-  form.addEventListener('submit', async function (e) {
+  form.addEventListener('submit', async e => {
     e.preventDefault();
 
-    // Honeypot
-    if (form.querySelector('input[name="_gotcha"]')?.value) return;
-
-    // Fill-time bot check
-    if (Date.now() - PAGE_LOAD_TIME < MIN_FILL_MS) {
+    /* Bot checks */
+    if (form.querySelector('input[name="_h"]')?.value) return;
+    if (Date.now() - LOAD_AT < MIN_FILL_MS) {
       setStatus('Please take a moment to fill the form carefully 🌸', 'info');
       return;
     }
 
-    // Required field validation
-    const name  = v('from_name');
-    const phone = v('phone');
-    const date  = v('date');
-    const time  = v('time');
-
+    const name = val('from_name'), phone = val('phone'),
+          date = val('fdate'),    time  = val('ftime');
     if (!name || !phone || !date || !time) {
-      setStatus('Please fill in your name, phone, date, and time 💕', 'error');
+      setStatus('Please fill in Name, Phone, Date and Time 💕', 'err');
       return;
     }
 
-    setLoading(true);
+    setLoad(true);
 
     const payload = {
-      from_name: name,
-      phone,
-      instagram: v('instagram'),
-      email:     v('email'),
-      date,
-      time,
-      service:   v('service') || 'Custom Design',
-      message:   v('message'),
+      from_name: name, phone,
+      instagram: '',
+      email: '',
+      date, time,
+      service: val('service') || 'Custom Design',
+      message: val('msg'),
     };
 
     let ok = false;
 
-    // 1. Vercel API (WhatsApp + Email + Supabase)
+    /* 1. Vercel API */
     try {
       const r = await fetch('/api/send-whatsapp', {
         method:  'POST',
@@ -245,44 +238,37 @@ function initForm() {
         body:    JSON.stringify(payload),
       });
       if (r.ok) ok = true;
-    } catch (_) { /* fall through */ }
+    } catch (_) {}
 
-    // 2. EmailJS fallback
+    /* 2. EmailJS fallback */
     if (!ok && window.emailjs) {
       try {
-        await emailjs.send(EMAILJS_SVC_ID, EMAILJS_TPL_ID, payload);
+        await emailjs.send(EJS_SVC, EJS_TPL, payload);
         ok = true;
-      } catch (err) {
-        console.error('[EmailJS]', err);
-      }
+      } catch (err) { console.error('[EJS]', err); }
     }
 
-    setLoading(false);
+    setLoad(false);
 
     if (ok) {
       form.reset();
-      setStatus('Enquiry sent! 💖 We\'ll confirm your appointment within 24 hours.', 'success');
+      setStatus('Sent! 💖 We\'ll confirm your appointment within 24 hours.', 'ok');
     } else {
-      setStatus(
-        'Something went wrong. Please email floralyyn7@gmail.com or reach us on Instagram 🌸',
-        'error'
-      );
+      setStatus('Something went wrong — please email us or reach us on Instagram 🌸', 'err');
     }
   });
 
-  function v(id) { return (form.querySelector('#' + id)?.value || '').trim(); }
-
-  function setLoading(on) {
-    if (!submitEl) return;
-    submitEl.disabled    = on;
-    submitEl.textContent = on ? 'Sending… 🌷' : 'Send Enquiry 💌';
+  function val(id) { return (form.querySelector('#' + id)?.value || '').trim(); }
+  function setLoad(on) {
+    if (!sbtn) return;
+    sbtn.disabled    = on;
+    sbtn.textContent = on ? 'Sending… 🌷' : 'Send Enquiry 💌';
   }
-
   function setStatus(msg, type) {
-    if (!statusEl) return;
-    statusEl.textContent = msg;
-    statusEl.style.color =
-      type === 'success' ? '#2d7a3a' :
-      type === 'error'   ? '#c0392b' : 'var(--muted)';
+    if (!status) return;
+    status.textContent = msg;
+    status.style.color =
+      type === 'ok'  ? '#22863a' :
+      type === 'err' ? '#c0392b' : 'var(--muted)';
   }
 }
