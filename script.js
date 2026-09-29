@@ -15,9 +15,8 @@ document.addEventListener('DOMContentLoaded', function () {
   initFloatingCTA();
   initScrollReveal();
   initPickers();
-  initForm();
   initGalleryLightbox();
-  initSmoothScroll();
+  initForm();
 });
 
 // ── EmailJS ───────────────────────────────────────────────────
@@ -25,14 +24,14 @@ function initEmailJS() {
   if (window.emailjs) emailjs.init(EMAILJS_PUB_KEY);
 }
 
-// ── Theme Toggle ──────────────────────────────────────────────
+// ── Theme ─────────────────────────────────────────────────────
 function initTheme() {
   const sw = document.getElementById('theme-switch');
   if (!sw) return;
 
-  const saved = localStorage.getItem('theme');
-  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-  const isDark = saved ? saved === 'dark' : prefersDark;
+  const stored     = localStorage.getItem('theme');
+  const preferDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const isDark     = stored ? stored === 'dark' : preferDark;
 
   if (isDark) { document.body.classList.add('dark-mode'); sw.checked = true; }
 
@@ -44,261 +43,215 @@ function initTheme() {
 
 // ── Sticky Header ─────────────────────────────────────────────
 function initStickyHeader() {
-  const header = document.getElementById('site-header');
-  if (!header) return;
-
-  function onScroll() {
-    header.classList.toggle('scrolled', window.scrollY > 30);
-  }
-  window.addEventListener('scroll', onScroll, { passive: true });
-  onScroll();
+  const h = document.getElementById('site-header');
+  if (!h) return;
+  const update = () => h.classList.toggle('scrolled', window.scrollY > 20);
+  window.addEventListener('scroll', update, { passive: true });
+  update();
 }
 
 // ── Mobile Nav ────────────────────────────────────────────────
 function initMobileNav() {
-  const hamburger = document.getElementById('hamburger');
-  const nav       = document.getElementById('mobile-nav');
-  const overlay   = document.getElementById('mobile-nav-overlay');
-  const closeBtn  = document.getElementById('mobile-nav-close');
-  if (!hamburger || !nav) return;
+  const btn     = document.getElementById('hamburger');
+  const nav     = document.getElementById('mobile-nav');
+  const overlay = document.getElementById('mob-overlay');
+  const closeB  = document.getElementById('mobile-nav-close');
+  if (!btn || !nav) return;
 
-  function openNav() {
+  function open() {
     nav.classList.add('open');
-    overlay.classList.add('visible');
-    hamburger.classList.add('open');
-    hamburger.setAttribute('aria-expanded', 'true');
     nav.removeAttribute('aria-hidden');
+    overlay.classList.add('visible');
+    btn.classList.add('open');
+    btn.setAttribute('aria-expanded', 'true');
+    btn.setAttribute('aria-label', 'Close navigation menu');
   }
 
-  function closeNav() {
+  function close() {
     nav.classList.remove('open');
-    overlay.classList.remove('visible');
-    hamburger.classList.remove('open');
-    hamburger.setAttribute('aria-expanded', 'false');
     nav.setAttribute('aria-hidden', 'true');
+    overlay.classList.remove('visible');
+    btn.classList.remove('open');
+    btn.setAttribute('aria-expanded', 'false');
+    btn.setAttribute('aria-label', 'Open navigation menu');
   }
 
-  hamburger.addEventListener('click', function () {
-    nav.classList.contains('open') ? closeNav() : openNav();
-  });
-
-  overlay?.addEventListener('click', closeNav);
-  closeBtn?.addEventListener('click', closeNav);
-
-  // Close nav when a link is tapped
-  nav.querySelectorAll('.mobile-nav-link').forEach(function (link) {
-    link.addEventListener('click', closeNav);
-  });
-
-  // Close on Escape
-  document.addEventListener('keydown', function (e) {
-    if (e.key === 'Escape' && nav.classList.contains('open')) closeNav();
-  });
+  btn.addEventListener('click',     () => nav.classList.contains('open') ? close() : open());
+  overlay.addEventListener('click', close);
+  closeB?.addEventListener('click', close);
+  nav.querySelectorAll('.mobile-nav-link').forEach(l => l.addEventListener('click', close));
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
 }
 
 // ── Floating CTA ──────────────────────────────────────────────
 function initFloatingCTA() {
   const cta  = document.getElementById('floating-cta');
-  const hero = document.querySelector('.hero-section');
+  const hero = document.querySelector('.hero');
   if (!cta || !hero) return;
 
-  const observer = new IntersectionObserver(
-    function (entries) {
-      // Show CTA only once hero is out of view
-      cta.classList.toggle('visible', !entries[0].isIntersecting);
-    },
+  new IntersectionObserver(
+    entries => cta.classList.toggle('visible', !entries[0].isIntersecting),
     { threshold: 0.1 }
-  );
-  observer.observe(hero);
+  ).observe(hero);
 }
 
 // ── Scroll Reveal ─────────────────────────────────────────────
 function initScrollReveal() {
-  const sections = document.querySelectorAll('.reveal-section');
-  if (!sections.length) return;
+  const els = document.querySelectorAll('.reveal');
+  if (!els.length) return;
 
-  const observer = new IntersectionObserver(
-    function (entries) {
-      entries.forEach(function (entry) {
-        if (entry.isIntersecting) {
-          entry.target.classList.add('visible');
-          observer.unobserve(entry.target);
-        }
-      });
-    },
-    { threshold: 0.12 }
+  const obs = new IntersectionObserver(
+    entries => entries.forEach(e => {
+      if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); }
+    }),
+    { threshold: 0.1 }
   );
 
-  sections.forEach(function (s) { observer.observe(s); });
+  els.forEach(el => obs.observe(el));
 }
 
-// ── Flatpickr Date & Time ─────────────────────────────────────
+// ── Flatpickr ─────────────────────────────────────────────────
 function initPickers() {
-  if (typeof flatpickr === 'undefined') {
-    // Retry after a tick in case script hasn't loaded yet
-    setTimeout(initPickers, 300);
-    return;
-  }
+  if (typeof flatpickr === 'undefined') { setTimeout(initPickers, 250); return; }
 
-  const today  = new Date();
-  const minDay = new Date(today);
-  minDay.setDate(minDay.getDate() + 1);
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
 
-  const maxDay = new Date(today);
-  maxDay.setDate(maxDay.getDate() + 90);
+  const maxDate = new Date();
+  maxDate.setDate(maxDate.getDate() + 90);
 
-  const dateInput = document.getElementById('date');
-  if (dateInput) {
-    flatpickr(dateInput, {
-      minDate:    minDay,
-      maxDate:    maxDay,
+  const dateEl = document.getElementById('date');
+  if (dateEl) {
+    flatpickr(dateEl, {
+      minDate: tomorrow,
+      maxDate,
       dateFormat: 'D, d M Y',
       disableMobile: false,
-      disable: [
-        function (date) { return date.getDay() === 0; } // no Sundays
-      ],
+      disable: [d => d.getDay() === 0], // no Sundays
     });
   }
 
-  const timeInput = document.getElementById('time');
-  if (timeInput) {
-    flatpickr(timeInput, {
-      enableTime:   true,
-      noCalendar:   true,
-      dateFormat:   'h:i K',
-      minTime:      '10:00',
-      maxTime:      '19:00',
+  const timeEl = document.getElementById('time');
+  if (timeEl) {
+    flatpickr(timeEl, {
+      enableTime:      true,
+      noCalendar:      true,
+      dateFormat:      'h:i K',
+      minTime:         '10:00',
+      maxTime:         '19:00',
       minuteIncrement: 30,
-      disableMobile: false,
+      disableMobile:   false,
     });
   }
 }
 
 // ── Gallery Lightbox ──────────────────────────────────────────
 function initGalleryLightbox() {
-  const lightbox    = document.getElementById('lightbox');
-  const lightboxImg = document.getElementById('lightbox-img');
-  const closeBtn    = document.getElementById('lightbox-close');
-  const prevBtn     = document.getElementById('lightbox-prev');
-  const nextBtn     = document.getElementById('lightbox-next');
-  const grid        = document.getElementById('gallery-bento');
+  const lb    = document.getElementById('lightbox');
+  const lbImg = document.getElementById('lb-img');
+  const grid  = document.getElementById('gallery-grid');
+  if (!lb || !lbImg || !grid) return;
 
-  if (!lightbox || !lightboxImg || !grid) return;
+  const imgs = Array.from(grid.querySelectorAll('.gb-item img'));
+  let cur = 0;
 
-  const items   = Array.from(grid.querySelectorAll('.gb-item img'));
-  let   current = 0;
-
-  function openAt(index) {
-    current = (index + items.length) % items.length;
-    lightboxImg.src = items[current].src;
-    lightboxImg.alt = items[current].alt;
-    lightbox.style.display = 'flex';
+  function show(i) {
+    cur = (i + imgs.length) % imgs.length;
+    lbImg.src = imgs[cur].src;
+    lbImg.alt = imgs[cur].alt;
+    lb.removeAttribute('hidden');
     document.body.style.overflow = 'hidden';
+    document.getElementById('lb-close')?.focus();
   }
 
-  function closeLightbox() {
-    lightbox.style.display = 'none';
+  function hide() {
+    lb.setAttribute('hidden', '');
     document.body.style.overflow = '';
   }
 
-  items.forEach(function (img, i) {
-    img.parentElement.addEventListener('click', function () { openAt(i); });
-  });
-
-  closeBtn?.addEventListener('click', closeLightbox);
-  prevBtn?.addEventListener('click', function () { openAt(current - 1); });
-  nextBtn?.addEventListener('click', function () { openAt(current + 1); });
-
-  lightbox.addEventListener('click', function (e) {
-    if (e.target === lightbox) closeLightbox();
-  });
-
-  document.addEventListener('keydown', function (e) {
-    if (lightbox.style.display === 'none') return;
-    if (e.key === 'Escape')      closeLightbox();
-    if (e.key === 'ArrowLeft')   openAt(current - 1);
-    if (e.key === 'ArrowRight')  openAt(current + 1);
-  });
-}
-
-// ── Smooth Scroll for anchor links ────────────────────────────
-function initSmoothScroll() {
-  const HEADER_OFFSET = 76;
-
-  document.querySelectorAll('a[href^="#"]').forEach(function (link) {
-    link.addEventListener('click', function (e) {
-      const id = link.getAttribute('href').slice(1);
-      if (!id) return;
-      const target = document.getElementById(id);
-      if (!target) return;
-      e.preventDefault();
-      const top = target.getBoundingClientRect().top + window.scrollY - HEADER_OFFSET;
-      window.scrollTo({ top, behavior: 'smooth' });
+  // Open on image click
+  imgs.forEach((img, i) => {
+    img.parentElement.addEventListener('click', () => show(i));
+    img.parentElement.setAttribute('tabindex', '0');
+    img.parentElement.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); show(i); }
     });
+  });
+
+  document.getElementById('lb-close')?.addEventListener('click', hide);
+  document.getElementById('lb-prev')?.addEventListener('click', () => show(cur - 1));
+  document.getElementById('lb-next')?.addEventListener('click', () => show(cur + 1));
+
+  lb.addEventListener('click', e => { if (e.target === lb) hide(); });
+
+  document.addEventListener('keydown', e => {
+    if (lb.hasAttribute('hidden')) return;
+    if (e.key === 'Escape')     hide();
+    if (e.key === 'ArrowLeft')  show(cur - 1);
+    if (e.key === 'ArrowRight') show(cur + 1);
   });
 }
 
 // ── Booking Form ──────────────────────────────────────────────
 function initForm() {
-  const form      = document.getElementById('booking-form');
-  const statusEl  = document.getElementById('form-status');
-  const submitBtn = document.getElementById('submit-btn');
+  const form     = document.getElementById('booking-form');
+  const statusEl = document.getElementById('form-status');
+  const submitEl = document.getElementById('submit-btn');
   if (!form) return;
 
   form.addEventListener('submit', async function (e) {
     e.preventDefault();
 
-    // Bot checks
-    const honeypot = form.querySelector('input[name="_gotcha"]');
-    if (honeypot?.value) return; // silent bot rejection
+    // Honeypot
+    if (form.querySelector('input[name="_gotcha"]')?.value) return;
 
+    // Fill-time bot check
     if (Date.now() - PAGE_LOAD_TIME < MIN_FILL_MS) {
-      showStatus('Please take a moment to fill the form carefully. 🌸', 'info');
+      setStatus('Please take a moment to fill the form carefully 🌸', 'info');
       return;
     }
 
-    // Basic required-field check
-    const name  = form.querySelector('#from_name')?.value.trim();
-    const phone = form.querySelector('#phone')?.value.trim();
-    const date  = form.querySelector('#date')?.value.trim();
-    const time  = form.querySelector('#time')?.value.trim();
+    // Required field validation
+    const name  = v('from_name');
+    const phone = v('phone');
+    const date  = v('date');
+    const time  = v('time');
 
     if (!name || !phone || !date || !time) {
-      showStatus('Please fill in your name, phone, date, and preferred time. 💕', 'error');
+      setStatus('Please fill in your name, phone, date, and time 💕', 'error');
       return;
     }
 
     setLoading(true);
 
-    // Build payload for API
     const payload = {
       from_name: name,
-      phone:     phone,
-      instagram: form.querySelector('#instagram')?.value.trim() || '',
-      email:     form.querySelector('#email')?.value.trim()     || '',
+      phone,
+      instagram: v('instagram'),
+      email:     v('email'),
       date,
       time,
-      service:   form.querySelector('#service')?.value         || 'Gel Nails',
-      message:   form.querySelector('#message')?.value.trim()  || '',
+      service:   v('service') || 'Custom Design',
+      message:   v('message'),
     };
 
-    let apiSuccess = false;
+    let ok = false;
 
-    // 1. Try the Vercel API route (WhatsApp + Resend email + Supabase save)
+    // 1. Vercel API (WhatsApp + Email + Supabase)
     try {
-      const res = await fetch('/api/send-whatsapp', {
+      const r = await fetch('/api/send-whatsapp', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
         body:    JSON.stringify(payload),
       });
-      if (res.ok) apiSuccess = true;
-    } catch (_) { /* continue to EmailJS fallback */ }
+      if (r.ok) ok = true;
+    } catch (_) { /* fall through */ }
 
-    // 2. EmailJS as backup (browser-side)
-    if (!apiSuccess && window.emailjs) {
+    // 2. EmailJS fallback
+    if (!ok && window.emailjs) {
       try {
         await emailjs.send(EMAILJS_SVC_ID, EMAILJS_TPL_ID, payload);
-        apiSuccess = true;
+        ok = true;
       } catch (err) {
         console.error('[EmailJS]', err);
       }
@@ -306,28 +259,30 @@ function initForm() {
 
     setLoading(false);
 
-    if (apiSuccess) {
+    if (ok) {
       form.reset();
-      showStatus('Enquiry sent! 💖 We\'ll confirm your appointment within 24 hours.', 'success');
+      setStatus('Enquiry sent! 💖 We\'ll confirm your appointment within 24 hours.', 'success');
     } else {
-      showStatus(
-        'Something went wrong. Please WhatsApp us directly or email floralyyn7@gmail.com 🌸',
+      setStatus(
+        'Something went wrong. Please email floralyyn7@gmail.com or reach us on Instagram 🌸',
         'error'
       );
     }
   });
 
-  function setLoading(loading) {
-    if (!submitBtn) return;
-    submitBtn.disabled = loading;
-    submitBtn.textContent = loading ? 'Sending… 🌷' : 'Send Enquiry 💌';
+  function v(id) { return (form.querySelector('#' + id)?.value || '').trim(); }
+
+  function setLoading(on) {
+    if (!submitEl) return;
+    submitEl.disabled    = on;
+    submitEl.textContent = on ? 'Sending… 🌷' : 'Send Enquiry 💌';
   }
 
-  function showStatus(msg, type) {
+  function setStatus(msg, type) {
     if (!statusEl) return;
     statusEl.textContent = msg;
     statusEl.style.color =
-      type === 'success' ? '#22863a' :
+      type === 'success' ? '#2d7a3a' :
       type === 'error'   ? '#c0392b' : 'var(--muted)';
   }
 }
