@@ -1,32 +1,30 @@
 <!doctype html>
 <html lang="en">
-
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <!-- ─── Primary SEO ─────────────────────────────────────────── -->
+  <!-- Primary SEO -->
   <title>Floralyn — Nail Art Studio | Pastel &amp; Custom Nail Designs</title>
-  <meta name="description"
-    content="Floralyn — a romantic, pastel nail art studio offering gel nails, custom designs, and bridal nail art. Book your appointment online." />
+  <meta name="description" content="Floralyn — a romantic, pastel nail art studio offering gel nails, custom designs, and bridal nail art. Book your appointment online." />
   <link rel="canonical" href="https://floralyn.vercel.app/" />
 
-  <!-- ─── Open Graph (WhatsApp / Instagram previews) ──────────── -->
+  <!-- Open Graph -->
   <meta property="og:type"        content="website" />
   <meta property="og:url"         content="https://floralyn.vercel.app/" />
   <meta property="og:title"       content="Floralyn — Nail Art Studio" />
-  <meta property="og:description" content="Soft. Romantic. Pastel nails. Book your nail appointment with Floralyn — gel, custom designs, and bridal nail art." />
+  <meta property="og:description" content="Soft. Romantic. Pastel nails. Book your nail appointment with Floralyn." />
   <meta property="og:image"       content="https://znycuzuveqhybqgevjvj.supabase.co/storage/v1/object/public/static/og-preview.jpg" />
   <meta property="og:locale"      content="en_IN" />
   <meta property="og:site_name"   content="Floralyn" />
 
-  <!-- ─── Twitter / X Card ─────────────────────────────────────── -->
+  <!-- Twitter Card -->
   <meta name="twitter:card"        content="summary_large_image" />
   <meta name="twitter:title"       content="Floralyn — Nail Art Studio" />
   <meta name="twitter:description" content="Soft. Romantic. Pastel nails. Book your nail appointment online." />
-  <meta name="twitter:image"       content="https://floralyn.vercel.app/images/og-preview.jpg" />
+  <meta name="twitter:image"       content="https://znycuzuveqhybqgevjvj.supabase.co/storage/v1/object/public/static/og-preview.jpg" />
 
-  <!-- ─── Structured Data (LocalBusiness) ─────────────────────── -->
+  <!-- Structured Data -->
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -35,315 +33,412 @@
     "description": "Soft. Romantic. Pastel nail art studio offering gel nails, custom designs, and bridal nail art.",
     "url": "https://floralyn.vercel.app/",
     "logo": "https://floralyn.vercel.app/images/logo.png",
-    "image": "https://floralyn.vercel.app/images/sample3.jpg",
-    "sameAs": [
-      "https://www.instagram.com/floralyn_nails_07"
-    ],
-    "contactPoint": {
-      "@type": "ContactPoint",
-      "contactType": "Appointment Booking",
-      "email": "floralyyn7@gmail.com"
-    },
-    "hasMap": "",
+    "sameAs": ["https://www.instagram.com/floralyn_nails_07"],
+    "contactPoint": { "@type": "ContactPoint", "contactType": "Appointment Booking", "email": "floralyyn7@gmail.com" },
     "priceRange": "₹₹"
   }
   </script>
 
-  <!-- ─── Fonts ─────────────────────────────────────────────────── -->
+  <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link
-    href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Poppins:wght@300;400;600&display=swap"
-    rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
 
-  <!-- ─── Styles ────────────────────────────────────────────────── -->
-  <link rel="stylesheet" href="style.css" />
+  <!-- Flatpickr CSS -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" />
 
-  <!-- Flatpickr — defer so it does not block HTML parsing -->
+  <!-- App CSS -->
+  <link rel="stylesheet" href="style.css" />
+
+  <!-- Flatpickr JS (defer — non-render-blocking) -->
   <script src="https://cdn.jsdelivr.net/npm/flatpickr" defer></script>
 </head>
 
 <body>
 
-  <!-- ─── Floating petals background ────────────────────────────── -->
+  <!-- ─── Floating petals ─────────────────────────────────────── -->
   <div class="petal-bg" aria-hidden="true">
-    <div class="petal"    style="left:8%;  top:-8%;  animation-delay:0s"></div>
-    <div class="petal p2" style="left:22%; top:-10%; animation-delay:2s"></div>
-    <div class="petal p3" style="left:42%; top:-6%;  animation-delay:4s"></div>
-    <div class="petal"    style="left:62%; top:-12%; animation-delay:6s"></div>
-    <div class="petal p2" style="left:78%; top:-8%;  animation-delay:8s"></div>
-    <div class="petal p3" style="left:32%; top:-30%; animation-delay:10s"></div>
+    <div class="petal"    style="left:5%;  animation-delay:0s;  animation-duration:16s"></div>
+    <div class="petal p2" style="left:18%; animation-delay:2s;  animation-duration:20s"></div>
+    <div class="petal p3" style="left:38%; animation-delay:5s;  animation-duration:14s"></div>
+    <div class="petal"    style="left:58%; animation-delay:3s;  animation-duration:18s"></div>
+    <div class="petal p2" style="left:74%; animation-delay:7s;  animation-duration:22s"></div>
+    <div class="petal p3" style="left:88%; animation-delay:1s;  animation-duration:17s"></div>
   </div>
 
-  <div class="container">
-
-    <!-- ─── Header ─────────────────────────────────────────────── -->
-    <header>
-      <div class="logo">
+  <!-- ─── Sticky Header ──────────────────────────────────────── -->
+  <header class="site-header" id="site-header">
+    <div class="header-inner">
+      <a href="#home" class="header-logo">
         <div class="logo-mark">
-          <img
-            src="images/logo.png"
-            alt="Floralyn nail art studio logo"
-            width="42" height="42" />
+          <img src="images/logo.png" alt="Floralyn" width="34" height="34" />
         </div>
-      </div>
-      <div class="brand">
-        <h1>Floralyn</h1>
-        <p class="muted">Soft. Romantic. Pastel nails.</p>
-      </div>
+        <span class="logo-text">Floralyn</span>
+      </a>
 
-      <!-- 🌙 Light / Dark Toggle -->
-      <div class="theme-toggle">
-        <input
-          type="checkbox"
-          id="theme-switch"
-          role="switch"
-          aria-label="Toggle dark mode" />
-        <label for="theme-switch" class="toggle-label">
-          <span class="sun" aria-hidden="true">☀️</span>
-          <span class="moon" aria-hidden="true">🌙</span>
-        </label>
-      </div>
-    </header>
+      <nav class="header-nav" id="header-nav" aria-label="Main navigation">
+        <a href="#services"     class="nav-link">Services</a>
+        <a href="#gallery"      class="nav-link">Gallery</a>
+        <a href="#how-it-works" class="nav-link">How it Works</a>
+        <a href="#booking"      class="nav-link">Contact</a>
+      </nav>
 
-    <!-- ─── Nav ────────────────────────────────────────────────── -->
-    <nav class="centered-nav" aria-label="Page sections">
-      <a class="tag" href="#gallery">Gallery</a>
-      <a class="tag" href="#booking">Book</a>
+      <div class="header-actions">
+        <!-- Theme toggle -->
+        <div class="theme-toggle">
+          <input type="checkbox" id="theme-switch" role="switch" aria-label="Toggle dark mode" />
+          <label for="theme-switch" class="toggle-label">
+            <span class="sun" aria-hidden="true">☀️</span>
+            <span class="moon" aria-hidden="true">🌙</span>
+          </label>
+        </div>
+        <a href="#booking" class="btn btn-primary btn-sm header-cta">Book Now</a>
+        <button class="hamburger" id="hamburger" aria-label="Toggle menu" aria-expanded="false" aria-controls="mobile-nav">
+          <span></span><span></span><span></span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ─── Mobile Nav Drawer ───────────────────────────────────── -->
+  <div class="mobile-nav" id="mobile-nav" aria-hidden="true" role="dialog" aria-label="Navigation menu">
+    <button class="mobile-nav-close" id="mobile-nav-close" aria-label="Close menu">✕</button>
+    <nav>
+      <a href="#services"     class="mobile-nav-link">Services</a>
+      <a href="#gallery"      class="mobile-nav-link">Gallery</a>
+      <a href="#how-it-works" class="mobile-nav-link">How it Works</a>
+      <a href="#booking"      class="mobile-nav-link">Book Appointment</a>
     </nav>
+    <a href="https://www.instagram.com/floralyn_nails_07" target="_blank" rel="noopener noreferrer" class="mobile-nav-insta">
+      📷 @floralyn_nails_07
+    </a>
+  </div>
+  <div class="mobile-nav-overlay" id="mobile-nav-overlay" aria-hidden="true"></div>
 
-    <!-- ─── Main content ───────────────────────────────────────── -->
-    <main>
+  <!-- ─── Hero ────────────────────────────────────────────────── -->
+  <section class="hero-section" id="home" aria-label="Welcome to Floralyn">
+    <div class="hero-content">
+      <p class="hero-eyebrow">✦ Romantic · Pastel · Handcrafted</p>
+      <h1 class="hero-title">
+        Where Every Nail<br />
+        <span class="gradient-text">Tells a Love Story</span>
+      </h1>
+      <p class="hero-sub">
+        Delicate nail art inspired by romance and modern luxury.
+        Gel nails, custom designs &amp; bridal nail art —
+        all handcrafted with love 💕
+      </p>
+      <div class="hero-actions">
+        <a href="#booking" class="btn btn-primary btn-lg">Book Appointment</a>
+        <a href="#gallery" class="btn btn-outline btn-lg">See Our Work</a>
+      </div>
+      <div class="hero-chips">
+        <span class="chip">✓ Hygienic</span>
+        <span class="chip">✓ Premium Gel</span>
+        <span class="chip">✓ Custom Designs</span>
+        <span class="chip">✓ Bridal Specialist</span>
+      </div>
+    </div>
 
-      <!-- Hero -->
-      <section class="hero" aria-label="About Floralyn">
-        <div class="hero-card">
-          <h2>Where every nail tells a love story 💕</h2>
-          <p>Floralyn creates delicate, pastel nail art inspired by romance and modern minimal luxury.
-            Perfect for everyday charm, dates, weddings and little self-care rituals.</p>
-          <p class="subtext">
-            Every design is handcrafted with love and precision — blending delicate art, soft tones, and
-            long-lasting finish. Whether you prefer minimal charm or dreamy pastels, we create nails that
-            mirror your mood and magic.
-          </p>
-          <p class="subtext">🌷 Hygienic • Gentle on nails • Premium gel polish • Custom designs available</p>
+    <div class="hero-visual" aria-hidden="true">
+      <div class="hero-img-stack">
+        <div class="hi-glow"></div>
+        <img class="hi hi-back"   src="images/sample3.jpg" alt="" width="190" height="240" />
+        <img class="hi hi-mid"    src="images/sample2.jpg" alt="" width="175" height="215" />
+        <img class="hi hi-front"  src="images/sample1.jpg" alt="" width="210" height="265" />
+      </div>
+    </div>
 
-          <div class="mini-gallery">
-            <img
-              src="images/sample1.jpg"
-              alt="Pastel pink gel nail art by Floralyn"
-              width="160" height="160"
-              loading="eager" />
-            <img
-              src="images/sample2.jpg"
-              alt="Romantic floral nail design by Floralyn"
-              width="160" height="160"
-              loading="lazy" />
+    <div class="hero-scroll-hint" aria-hidden="true">
+      <span>Scroll</span>
+      <div class="scroll-line"></div>
+    </div>
+  </section>
+
+  <!-- ─── Main Content ────────────────────────────────────────── -->
+  <main>
+
+    <!-- SERVICES -->
+    <section class="services-section reveal-section" id="services" aria-labelledby="services-heading">
+      <div class="container">
+        <div class="section-header">
+          <span class="section-eyebrow">What We Offer</span>
+          <h2 class="section-title" id="services-heading">Our Services</h2>
+          <p class="section-sub">Every service is delivered with precision, care, and a touch of magic.</p>
+        </div>
+        <div class="services-grid">
+          <div class="service-card">
+            <div class="service-icon" aria-hidden="true">💅</div>
+            <h3>Simple Manicure</h3>
+            <p>Clean, classic nail care with your choice of polish. Perfect for everyday elegance and charm.</p>
+            <a href="#booking" class="service-cta">Book This →</a>
           </div>
-
-          <div class="hero-links">
-            <a
-              href="https://www.instagram.com/floralyn_nails_07?igsh=eGkxNHlkMTh2MzBv"
-              class="insta-link"
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="Follow Floralyn on Instagram (opens in new tab)">
-              🌷 Follow us on Instagram
-            </a>
+          <div class="service-card">
+            <div class="service-icon" aria-hidden="true">✨</div>
+            <h3>Gel Nails</h3>
+            <p>Long-lasting gel polish with a flawless, chip-resistant finish that stays perfect for weeks.</p>
+            <a href="#booking" class="service-cta">Book This →</a>
+          </div>
+          <div class="service-card service-card--featured">
+            <div class="service-badge">Most Popular</div>
+            <div class="service-icon" aria-hidden="true">🎨</div>
+            <h3>Custom Design</h3>
+            <p>Bespoke nail art tailored entirely to your vision. Bring your inspiration, we bring it to life.</p>
+            <a href="#booking" class="service-cta service-cta--light">Book This →</a>
+          </div>
+          <div class="service-card">
+            <div class="service-icon" aria-hidden="true">👰</div>
+            <h3>Bridal / Special Occasion</h3>
+            <p>Stunning, memorable nail designs for your most important and beautiful moments in life.</p>
+            <a href="#booking" class="service-cta">Book This →</a>
           </div>
         </div>
-      </section>
+      </div>
+    </section>
 
-      <!-- ─── Booking Form ──────────────────────────────────────── -->
-      <section id="booking" class="form-card" aria-labelledby="booking-heading">
-        <h3 id="booking-heading">Book Your Nail Appointment ✨</h3>
-        <p class="note">Fill in your details and we'll reply within 12–24 hours. For urgent queries, use WhatsApp.</p>
-
-        <form id="booking-form" novalidate>
-
-          <!-- Honeypot — hidden from real users, filled by bots -->
-          <div class="hp-field" aria-hidden="true">
-            <label for="_gotcha">Leave this blank</label>
-            <input type="text" id="_gotcha" name="_gotcha" tabindex="-1" autocomplete="off" />
-          </div>
-
-          <!-- Row 1: Name + Phone -->
-          <div class="form-row">
-            <div class="col">
-              <label for="from_name">Your Name <span class="req" aria-hidden="true">*</span></label>
-              <input
-                type="text"
-                id="from_name"
-                name="from_name"
-                placeholder="Your full name"
-                autocomplete="name"
-                required
-                aria-required="true" />
-            </div>
-            <div class="col">
-              <label for="phone">Contact Number <span class="req" aria-hidden="true">*</span></label>
-              <input
-                type="tel"
-                id="phone"
-                name="phone"
-                placeholder="+91 XXXXX XXXXX"
-                autocomplete="tel"
-                inputmode="tel"
-                required
-                aria-required="true" />
-            </div>
-          </div>
-
-          <!-- Row 2: Instagram + Email -->
-          <div class="form-row">
-            <div class="col">
-              <label for="instagram">Instagram Handle <span class="optional">(optional)</span></label>
-              <input
-                type="text"
-                id="instagram"
-                name="instagram"
-                placeholder="@yourusername"
-                autocomplete="off"
-                inputmode="text" />
-            </div>
-            <div class="col">
-              <label for="email">Email Address <span class="optional">(optional)</span></label>
-              <input
-                type="email"
-                id="email"
-                name="email"
-                placeholder="you@example.com"
-                autocomplete="email"
-                inputmode="email" />
-            </div>
-          </div>
-
-          <!-- Row 3: Date + Time -->
-          <div class="form-row date-time-row">
-            <div class="col">
-              <label for="date">Preferred Date <span class="req" aria-hidden="true">*</span></label>
-              <input
-                type="text"
-                id="date"
-                name="date"
-                placeholder="Select date"
-                readonly
-                aria-required="true" />
-            </div>
-            <div class="col">
-              <label for="time">Preferred Time <span class="req" aria-hidden="true">*</span></label>
-              <input
-                type="text"
-                id="time"
-                name="time"
-                placeholder="Select time"
-                readonly
-                aria-required="true" />
-            </div>
-          </div>
-
-          <!-- Row 4: Service -->
-          <div class="form-row">
-            <div class="col" style="flex: 1 1 100%;">
-              <label for="service">Service</label>
-              <select id="service" name="service" aria-required="true">
-                <option value="Simple Manicure">Simple Manicure</option>
-                <option value="Gel Nails">Gel Nails</option>
-                <option value="Custom Design">Custom Design</option>
-                <option value="Bridal / Special Occasion">Bridal / Special Occasion</option>
-              </select>
-            </div>
-          </div>
-
-          <!-- Row 5: Message -->
-          <div class="form-row">
-            <div class="col" style="flex: 1 1 100%;">
-              <label for="message">Special Requests <span class="optional">(optional)</span></label>
-              <textarea
-                id="message"
-                name="message"
-                placeholder="Any special requests, references, or inspo ideas?"
-                rows="3"></textarea>
-            </div>
-          </div>
-
-          <!-- Row 6: Submit -->
-          <div class="form-row submit-row">
-            <button type="submit" class="btn btn-primary" id="submit-btn">
-              Send Enquiry
-            </button>
-            <div
-              id="form-status"
-              class="note"
-              role="status"
-              aria-live="polite"
-              aria-atomic="true">
-              We will contact you soon 💗
-            </div>
-          </div>
-
-        </form>
-      </section>
-
-      <!-- ─── Gallery Section ───────────────────────────────────── -->
-      <section id="gallery" class="gallery-section" aria-labelledby="gallery-heading">
-        <h3 id="gallery-heading" class="gallery-title">Some of Our Magic ✨</h3>
-        <div class="gallery-grid">
-          <img
-            src="images/sample3.jpg"
-            alt="Minimal pastel nail art design by Floralyn"
-            width="180" height="180"
-            loading="lazy" />
-          <img
-            src="images/sample4.jpg"
-            alt="Soft lilac gel nail set by Floralyn"
-            width="180" height="180"
-            loading="lazy" />
-          <img
-            src="images/sample5.jpg"
-            alt="Dreamy floral nail art by Floralyn"
-            width="180" height="180"
-            loading="lazy" />
-          <img
-            src="images/sample6.jpg"
-            alt="Custom nail design with pastel tones by Floralyn"
-            width="180" height="180"
-            loading="lazy" />
+    <!-- GALLERY -->
+    <section class="gallery-section reveal-section" id="gallery" aria-labelledby="gallery-heading">
+      <div class="container">
+        <div class="section-header">
+          <span class="section-eyebrow">Our Work</span>
+          <h2 class="section-title" id="gallery-heading">Some of Our Magic ✨</h2>
+          <p class="section-sub">Each design is unique — delicate, precise, and made with love.</p>
         </div>
 
-        <div class="gallery-footer">
-          Follow on
-          <a
-            href="https://www.instagram.com/floralyn_nails_07?igsh=eGkxNHlkMTh2MzBv"
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label="Follow Floralyn on Instagram (opens in new tab)">@Floralyn</a>
-          &bull;
-          <a
-            href="mailto:floralyyn7@gmail.com"
-            aria-label="Email Floralyn">floralyyn7@gmail.com</a>
+        <div class="gallery-bento" id="gallery-bento">
+          <div class="gb-item gb-tall">
+            <img src="images/sample1.jpg" alt="Pastel pink gel nail art by Floralyn" loading="lazy" width="400" height="520" />
+            <div class="gb-overlay"><span>View</span></div>
+          </div>
+          <div class="gb-item">
+            <img src="images/sample2.jpg" alt="Romantic floral nail design by Floralyn" loading="lazy" width="300" height="300" />
+            <div class="gb-overlay"><span>View</span></div>
+          </div>
+          <div class="gb-item">
+            <img src="images/sample3.jpg" alt="Minimal pastel nail art by Floralyn" loading="lazy" width="300" height="300" />
+            <div class="gb-overlay"><span>View</span></div>
+          </div>
+          <div class="gb-item">
+            <img src="images/sample4.jpg" alt="Soft lilac gel nail set by Floralyn" loading="lazy" width="300" height="300" />
+            <div class="gb-overlay"><span>View</span></div>
+          </div>
+          <div class="gb-item">
+            <img src="images/sample5.jpg" alt="Dreamy floral nail art by Floralyn" loading="lazy" width="300" height="300" />
+            <div class="gb-overlay"><span>View</span></div>
+          </div>
+          <div class="gb-item gb-wide">
+            <img src="images/sample6.jpg" alt="Custom nail design with pastel tones by Floralyn" loading="lazy" width="600" height="300" />
+            <div class="gb-overlay"><span>View</span></div>
+          </div>
         </div>
-      </section>
 
-    </main>
+        <div class="gallery-cta-wrap">
+          <a href="https://www.instagram.com/floralyn_nails_07?igsh=eGkxNHlkMTh2MzBv"
+             target="_blank" rel="noopener noreferrer"
+             class="btn btn-outline"
+             aria-label="Follow Floralyn on Instagram (opens in new tab)">
+            🌷 Follow @floralyn_nails_07 on Instagram
+          </a>
+        </div>
+      </div>
+    </section>
 
-    <!-- ─── Footer ─────────────────────────────────────────────── -->
-    <footer>
-      <span>Made with 💖 — Floralyn</span>
-      <img
-        src="images/logo.png"
-        alt=""
-        aria-hidden="true"
-        width="28" height="28" />
-    </footer>
+    <!-- HOW IT WORKS -->
+    <section class="hiw-section reveal-section" id="how-it-works" aria-labelledby="hiw-heading">
+      <div class="container">
+        <div class="section-header">
+          <span class="section-eyebrow">Simple Process</span>
+          <h2 class="section-title" id="hiw-heading">Browse, Book &amp; Bloom 🌷</h2>
+          <p class="section-sub">Getting your dream nails is as easy as three simple steps.</p>
+        </div>
+        <div class="hiw-grid">
+          <div class="hiw-step">
+            <div class="hiw-num" aria-hidden="true">01</div>
+            <div class="hiw-icon" aria-hidden="true">🌸</div>
+            <h3>Browse</h3>
+            <p>Explore our gallery and Instagram, save designs that speak to your soul, or describe your dream.</p>
+          </div>
+          <div class="hiw-arrow" aria-hidden="true">→</div>
+          <div class="hiw-step">
+            <div class="hiw-num" aria-hidden="true">02</div>
+            <div class="hiw-icon" aria-hidden="true">📅</div>
+            <h3>Book</h3>
+            <p>Fill the booking form with your preferred date, time, and service. We'll confirm in 24 hours.</p>
+          </div>
+          <div class="hiw-arrow" aria-hidden="true">→</div>
+          <div class="hiw-step">
+            <div class="hiw-num" aria-hidden="true">03</div>
+            <div class="hiw-icon" aria-hidden="true">💅</div>
+            <h3>Bloom</h3>
+            <p>Come in, relax, and leave with nails that make you feel absolutely magical. 💖</p>
+          </div>
+        </div>
+      </div>
+    </section>
 
-  </div><!-- /.container -->
+    <!-- BOOKING -->
+    <section class="booking-section reveal-section" id="booking" aria-labelledby="booking-heading">
+      <div class="container">
+        <div class="booking-split">
 
-  <!-- ─── EmailJS SDK ───────────────────────────────────────────── -->
+          <!-- Left info panel -->
+          <div class="booking-info">
+            <span class="section-eyebrow">Ready to Bloom?</span>
+            <h2 class="section-title" id="booking-heading">Book Your Appointment ✨</h2>
+            <p class="booking-info-sub">Fill in your details and we'll get back to you within 12–24 hours to confirm your slot.</p>
+            <ul class="booking-perks">
+              <li><span aria-hidden="true">💖</span> Personalized nail art for every client</li>
+              <li><span aria-hidden="true">🌿</span> Gentle, safe products — easy on your nails</li>
+              <li><span aria-hidden="true">✨</span> Premium gel polish, long-lasting finish</li>
+              <li><span aria-hidden="true">📸</span> Instagram-worthy results, guaranteed</li>
+            </ul>
+            <div class="booking-contact-links">
+              <a href="https://www.instagram.com/floralyn_nails_07" target="_blank" rel="noopener noreferrer">
+                📷 Instagram
+              </a>
+              <a href="mailto:floralyyn7@gmail.com">📧 Email Us</a>
+            </div>
+          </div>
+
+          <!-- Right form panel -->
+          <div class="booking-form-wrap">
+            <form id="booking-form" class="booking-form" novalidate>
+
+              <!-- Honeypot — bots only -->
+              <div class="hp-field" aria-hidden="true">
+                <label for="_gotcha">Leave this blank</label>
+                <input type="text" id="_gotcha" name="_gotcha" tabindex="-1" autocomplete="off" />
+              </div>
+
+              <div class="form-row">
+                <div class="col">
+                  <label for="from_name">Your Name <span class="req" aria-hidden="true">*</span></label>
+                  <input type="text" id="from_name" name="from_name" placeholder="Full name"
+                    autocomplete="name" required aria-required="true" />
+                </div>
+                <div class="col">
+                  <label for="phone">Contact Number <span class="req" aria-hidden="true">*</span></label>
+                  <input type="tel" id="phone" name="phone" placeholder="+91 XXXXX XXXXX"
+                    autocomplete="tel" inputmode="tel" required aria-required="true" />
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="col">
+                  <label for="instagram">Instagram <span class="optional">(optional)</span></label>
+                  <input type="text" id="instagram" name="instagram" placeholder="@yourusername" autocomplete="off" />
+                </div>
+                <div class="col">
+                  <label for="email">Email <span class="optional">(optional)</span></label>
+                  <input type="email" id="email" name="email" placeholder="you@example.com"
+                    autocomplete="email" inputmode="email" />
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="col">
+                  <label for="date">Preferred Date <span class="req" aria-hidden="true">*</span></label>
+                  <input type="text" id="date" name="date" placeholder="Pick a date" readonly aria-required="true" />
+                </div>
+                <div class="col">
+                  <label for="time">Preferred Time <span class="req" aria-hidden="true">*</span></label>
+                  <input type="text" id="time" name="time" placeholder="Pick a time" readonly aria-required="true" />
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="col full">
+                  <label for="service">Service <span class="req" aria-hidden="true">*</span></label>
+                  <select id="service" name="service" aria-required="true">
+                    <option value="Simple Manicure">Simple Manicure</option>
+                    <option value="Gel Nails">Gel Nails</option>
+                    <option value="Custom Design">Custom Design</option>
+                    <option value="Bridal / Special Occasion">Bridal / Special Occasion</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="col full">
+                  <label for="message">Special Requests <span class="optional">(optional)</span></label>
+                  <textarea id="message" name="message"
+                    placeholder="Inspo images, colour palette, any special occasion?"
+                    rows="3" maxlength="1000"></textarea>
+                </div>
+              </div>
+
+              <button type="submit" class="btn btn-primary btn-full" id="submit-btn">
+                Send Enquiry 💌
+              </button>
+
+              <div id="form-status" class="form-status" role="status" aria-live="polite" aria-atomic="true">
+                We will contact you soon 💗
+              </div>
+
+            </form>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ─── Footer ──────────────────────────────────────────────── -->
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <div class="footer-logo-wrap">
+            <img src="images/logo.png" alt="" aria-hidden="true" width="36" height="36" />
+            <span>Floralyn</span>
+          </div>
+          <p class="footer-tagline">Soft. Romantic.<br />Pastel nails.</p>
+          <div class="footer-socials">
+            <a href="https://www.instagram.com/floralyn_nails_07" target="_blank" rel="noopener noreferrer"
+               aria-label="Floralyn on Instagram" class="social-link">📷</a>
+            <a href="mailto:floralyyn7@gmail.com" aria-label="Email Floralyn" class="social-link">📧</a>
+          </div>
+        </div>
+        <div class="footer-col">
+          <h4>Explore</h4>
+          <a href="#services">Services</a>
+          <a href="#gallery">Gallery</a>
+          <a href="#how-it-works">How it Works</a>
+          <a href="#booking">Book Now</a>
+        </div>
+        <div class="footer-col">
+          <h4>Get in Touch</h4>
+          <a href="mailto:floralyyn7@gmail.com">floralyyn7@gmail.com</a>
+          <a href="https://www.instagram.com/floralyn_nails_07" target="_blank" rel="noopener noreferrer">@floralyn_nails_07</a>
+          <p class="footer-hours">Mon–Sat &bull; 10am – 7pm</p>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <span>Made with 💖 in India — Floralyn</span>
+        <span>© 2026 Floralyn. All rights reserved.</span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Floating Book CTA -->
+  <a href="#booking" class="floating-cta" id="floating-cta" aria-label="Book an appointment">
+    💅 Book Now
+  </a>
+
+  <!-- Gallery Lightbox -->
+  <div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="Gallery image viewer" style="display:none">
+    <button class="lightbox-close" id="lightbox-close" aria-label="Close image">✕</button>
+    <button class="lightbox-prev" id="lightbox-prev" aria-label="Previous image">‹</button>
+    <div class="lightbox-img-wrap">
+      <img id="lightbox-img" src="" alt="" />
+    </div>
+    <button class="lightbox-next" id="lightbox-next" aria-label="Next image">›</button>
+  </div>
+
+  <!-- EmailJS SDK -->
   <script src="https://cdn.emailjs.com/dist/email.min.js"></script>
 
-  <!-- ─── App Script ───────────────────────────────────────────── -->
+  <!-- App Script -->
   <script src="script.js" defer></script>
 
 </body>
