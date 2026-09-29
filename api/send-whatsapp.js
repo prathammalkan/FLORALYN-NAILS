@@ -189,9 +189,18 @@ module.exports = async function handler(req, res) {
   // ── 2. Twilio WhatsApp (non-fatal) ────────────────────────────
   const twilioSid  = process.env.TWILIO_ACCOUNT_SID;
   const twilioAuth = process.env.TWILIO_AUTH_TOKEN;
-  const fromWa     = process.env.TWILIO_WHATSAPP_FROM || 'whatsapp:+17372508034';
-  const toWa       = process.env.DEST_WHATSAPP_TO;
-  let   waSent     = false;
+  const fromWa     = (process.env.TWILIO_WHATSAPP_FROM || 'whatsapp:+17372508034').startsWith('whatsapp:')
+                   ? process.env.TWILIO_WHATSAPP_FROM || 'whatsapp:+17372508034'
+                   : `whatsapp:${process.env.TWILIO_WHATSAPP_FROM}`;
+  const toWa       = process.env.DEST_WHATSAPP_TO
+                   ? (process.env.DEST_WHATSAPP_TO.startsWith('whatsapp:')
+                       ? process.env.DEST_WHATSAPP_TO
+                       : `whatsapp:${process.env.DEST_WHATSAPP_TO}`)
+                   : null;
+
+  let waSent    = false;
+  let waErrCode = null;
+  let waErrMsg  = null;
 
   if (twilioSid && twilioAuth && toWa) {
     try {
@@ -203,19 +212,49 @@ module.exports = async function handler(req, res) {
         `📅 *Date:* ${date}\n` +
         `⏰ *Time:* ${time}\n` +
         `💎 *Service:* ${service}\n` +
-        (instagram ? `📷 *Instagram:* ${instagram}\n` : '') +
-        (email     ? `📧 *Email:* ${email}\n`         : '') +
-        (message   ? `\n💬 *Note:* ${message}\n`      : '') +
-        `\n_Sent via Floralyn booking form_`;
+        (message ? `\n💬 *Note:* ${message}\n` : '') +
+        `\n_Floralyn booking form_`;
 
-      await client.messages.create({
-        from: fromWa.startsWith('whatsapp:') ? fromWa : `whatsapp:${fromWa}`,
-        to:   toWa.startsWith('whatsapp:')   ? toWa   : `whatsapp:${toWa}`,
-        body: waMsg,
-      });
-      waSent = true;
+      // Attempt 1: free-form body
+      try {
+        await client.messages.create({ from: fromWa, to: toWa, body: waMsg });
+        waSent = true;
+      } catch (bodyErr) {
+        // WhatsApp Business often requires a pre-approved template for business-initiated messages
+        // Error 63016 = template required; 21211 = invalid To number; 63007 = no channel
+        waErrCode = bodyErr.code;
+        console.error('[Twilio] body attempt failed:', bodyErr.code, bodyErr.message);
+
+        // Attempt 2: fallback to ContentSid template (if env var set)
+        const contentSid = process.env.TWILIO_CONTENT_SID;
+        if (contentSid) {
+          try {
+            await client.messages.create({
+              from: fromWa, to: toWa,
+              contentSid,
+              contentVariables: JSON.stringify({
+                '1': from_name,
+                '2': date,
+                '3': time,
+                '4': service,
+                '5': phone,
+              }),
+            });
+            waSent    = true;
+            waErrCode = null;
+          } catch (tplErr) {
+            waErrCode = tplErr.code;
+            waErrMsg  = tplErr.message;
+            console.error('[Twilio] template attempt failed:', tplErr.code, tplErr.message);
+          }
+        } else {
+          waErrMsg = bodyErr.message;
+        }
+      }
     } catch (err) {
-      console.error('[Twilio] WhatsApp error:', err.message);
+      waErrCode = err.code || 'INIT_FAIL';
+      waErrMsg  = err.message;
+      console.error('[Twilio] init error:', err.message);
     }
   }
 
@@ -223,27 +262,38 @@ module.exports = async function handler(req, res) {
   const resendKey  = process.env.RESEND_API_KEY;
   const ownerEmail = process.env.OWNER_EMAIL || 'floralyyn7@gmail.com';
   let   emailSent  = false;
+  let   emailErr   = null;
 
   if (Resend && resendKey) {
     try {
       const resend = new Resend(resendKey);
-      await resend.emails.send({
+      const result = await resend.emails.send({
         from:    'Floralyn Bookings <onboarding@resend.dev>',
-        to:      ownerEmail,
+        to:      [ownerEmail],
         subject: `💅 New Appointment: ${from_name} — ${service}`,
         html:    buildEmailHtml(data),
       });
-      emailSent = true;
+      // Resend returns { data, error }
+      if (result.error) {
+        emailErr = result.error.message;
+        console.error('[Resend] send error:', result.error);
+      } else {
+        emailSent = true;
+      }
     } catch (err) {
+      emailErr = err.message;
       console.error('[Resend] Email error:', err.message);
     }
   }
 
   // ── Respond ───────────────────────────────────────────────────
   return res.status(200).json({
-    ok:         true,
-    saved:      dbSaved,
-    whatsapp:   waSent,
-    email:      emailSent,
+    ok:          true,
+    saved:       dbSaved,
+    whatsapp:    waSent,
+    waErrCode,                         // e.g. 63016 = template required
+    waErrMsg,
+    email:       emailSent,
+    emailErr,
   });
 };
