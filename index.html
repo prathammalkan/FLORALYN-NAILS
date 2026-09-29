@@ -424,18 +424,18 @@
 
           <p id="fstatus" class="f-status" role="status" aria-live="polite" aria-atomic="true"></p>
         </form>
-      </div>
 
-      <div class="bk-links reveal">
-        <a href="mailto:floralyyn7@gmail.com" class="bk-link">
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-          Email Us
-        </a>
-        <a href="https://www.instagram.com/floralyn_nails_07"
-           target="_blank" rel="noopener noreferrer" class="bk-link">
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="6"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>
-          Instagram
-        </a>
+        <!-- Success screen (hidden until form succeeds) -->
+        <div class="f-success" id="fsuccess" hidden aria-live="polite">
+          <div class="fsc-icon" aria-hidden="true">💖</div>
+          <h3>Enquiry Sent!</h3>
+          <p>We'll confirm your appointment within 24 hours.</p>
+          <div class="fsc-summary" id="fsc-summary"></div>
+          <button type="button" class="btn btn-outline fsc-again" id="fsc-again">
+            Book another slot →
+          </button>
+        </div>
+
       </div>
     </div>
   </section>
