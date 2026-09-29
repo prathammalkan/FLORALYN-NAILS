@@ -233,5 +233,41 @@ module.exports = async function handler(req, res) {
     } catch (e) { results.emailErr = e.message; console.error('[Resend]', e.message); }
   }
 
-  return res.status(200).json(results);
+  // ── 4. Telegram Bot (non-fatal, instant, no spam) ────────────
+  const tgToken  = process.env.TELEGRAM_BOT_TOKEN;
+  const tgChatId = process.env.TELEGRAM_CHAT_ID;
+  let   tgSent   = false;
+  let   tgErr    = null;
+
+  if (tgToken && tgChatId) {
+    try {
+      const tgMsg =
+        `💅 *New Floralyn Booking!*\n\n` +
+        `👤 *Name:* ${from_name}\n` +
+        `📞 *Phone:* \`${phone}\`\n` +
+        `📅 *Date:* ${date}\n` +
+        `⏰ *Time:* ${time}\n` +
+        `💎 *Service:* ${normService}` +
+        (message ? `\n💬 *Note:* ${message}` : '') +
+        `\n\n_Reply to this customer to confirm! 🌸_`;
+
+      const tgRes = await fetch(
+        `https://api.telegram.org/bot${tgToken}/sendMessage`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            chat_id: tgChatId,
+            text: tgMsg,
+            parse_mode: 'Markdown',
+          }),
+        }
+      );
+      const tgData = await tgRes.json().catch(() => ({}));
+      if (tgData.ok) tgSent = true;
+      else { tgErr = tgData.description; console.error('[Telegram]', tgData.description); }
+    } catch (e) { tgErr = e.message; console.error('[Telegram]', e.message); }
+  }
+
+  return res.status(200).json({ ...results, telegram: tgSent, tgErr });
 };
