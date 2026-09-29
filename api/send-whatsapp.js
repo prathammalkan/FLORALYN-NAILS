@@ -250,39 +250,45 @@ module.exports = async function handler(req, res) {
   }
 
   // ── 4. Telegram Bot (non-fatal, instant, no spam) ────────────
-  const tgToken  = process.env.TELEGRAM_BOT_TOKEN;
-  const tgChatId = process.env.TELEGRAM_CHAT_ID;
-  let   tgSent   = false;
-  let   tgErr    = null;
+  // TELEGRAM_CHAT_ID supports multiple IDs separated by commas
+  // e.g. "123456789,987654321"
+  const tgToken   = process.env.TELEGRAM_BOT_TOKEN;
+  const tgChatRaw = process.env.TELEGRAM_CHAT_ID || '';
+  const tgChatIds = tgToken
+    ? tgChatRaw.split(',').map(s => s.trim()).filter(Boolean)
+    : [];
+  let tgSent = false;
+  let tgErr  = null;
 
-  if (tgToken && tgChatId) {
-    try {
-      const tgMsg =
-        `💅 *New Floralyn Booking!*\n\n` +
-        `👤 *Name:* ${from_name}\n` +
-        `📞 *Phone:* \`${phone}\`\n` +
-        `📅 *Date:* ${date}\n` +
-        `⏰ *Time:* ${time}\n` +
-        `💎 *Service:* ${normService}` +
-        (message ? `\n💬 *Note:* ${message}` : '') +
-        `\n\n_Reply to this customer to confirm! 🌸_`;
+  if (tgToken && tgChatIds.length) {
+    const tgMsg =
+      `💅 *New Floralyn Booking!*\n\n` +
+      `👤 *Name:* ${from_name}\n` +
+      `📞 *Phone:* \`${phone}\`\n` +
+      `📅 *Date:* ${date}\n` +
+      `⏰ *Time:* ${time}\n` +
+      `💎 *Service:* ${normService}` +
+      (message ? `\n💬 *Note:* ${message}` : '') +
+      `\n\n_Reply to confirm this appointment 🌸_`;
 
-      const tgRes = await fetch(
-        `https://api.telegram.org/bot${tgToken}/sendMessage`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            chat_id: tgChatId,
-            text: tgMsg,
-            parse_mode: 'Markdown',
-          }),
-        }
-      );
-      const tgData = await tgRes.json().catch(() => ({}));
-      if (tgData.ok) tgSent = true;
-      else { tgErr = tgData.description; console.error('[Telegram]', tgData.description); }
-    } catch (e) { tgErr = e.message; console.error('[Telegram]', e.message); }
+    // Send to all recipients in parallel
+    const sends = tgChatIds.map(chatId =>
+      fetch(`https://api.telegram.org/bot${tgToken}/sendMessage`, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chat_id: chatId, text: tgMsg, parse_mode: 'Markdown' }),
+      })
+      .then(r => r.json().catch(() => ({})))
+      .then(d => {
+        if (!d.ok) console.error(`[Telegram] chat ${chatId}:`, d.description);
+        return d.ok;
+      })
+      .catch(e => { console.error(`[Telegram] chat ${chatId}:`, e.message); return false; })
+    );
+
+    const results2 = await Promise.all(sends);
+    tgSent = results2.some(Boolean); // true if at least one succeeded
+    if (!tgSent) tgErr = 'All recipients failed';
   }
 
   return res.status(200).json({ ...results, telegram: tgSent, tgErr });
