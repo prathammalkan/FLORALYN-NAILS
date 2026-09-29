@@ -18,7 +18,7 @@
   --sh-sm:   0 2px 12px rgba(110,58,117,.08);
   --sh-md:   0 8px 32px rgba(110,58,117,.13);
   --sh-lg:   0 20px 60px rgba(110,58,117,.18);
-  --hh:      60px;   /* header height */
+  --hh:      60px;
   --r:       14px;
   --r-lg:    22px;
   --r-xl:    30px;
@@ -46,6 +46,160 @@ ul  { list-style: none; }
 button { font-family: inherit; cursor: pointer; border: none; background: none; }
 :focus        { outline: none; }
 :focus-visible { outline: 2px solid var(--p); outline-offset: 3px; border-radius: 4px; }
+
+/* ── 3. Multi-step Form ─────────────────────────────────────── */
+.step-ind {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 28px;
+}
+.step-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--bdr);
+  transition: all .35s cubic-bezier(.4,0,.2,1);
+  flex-shrink: 0;
+}
+.step-dot.act {
+  width: 28px;
+  border-radius: 4px;
+  background: var(--p);
+}
+
+.f-step { display: none; }
+.f-step.act { display: block; animation: stepIn .32s ease; }
+@keyframes stepIn {
+  from { opacity: 0; transform: translateX(24px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+.f-step.back-anim { animation: stepBack .32s ease; }
+@keyframes stepBack {
+  from { opacity: 0; transform: translateX(-24px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+.step-hd { text-align: center; margin-bottom: 24px; }
+.step-emoji { font-size: 44px; line-height: 1; margin-bottom: 12px; display: block; }
+.step-hd h3 {
+  font-family: 'Playfair Display', serif;
+  font-size: 22px; font-weight: 700;
+  color: var(--text); margin-bottom: 4px;
+}
+.step-hd p { font-size: 14px; color: var(--muted); }
+
+.step-nav {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+}
+.btn-back {
+  flex: 1;
+  background: transparent;
+  color: var(--muted);
+  border: 1.5px solid var(--bdr);
+  border-radius: var(--r);
+  padding: 13px 16px;
+  font-family: 'Poppins', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: border-color .2s, color .2s;
+  min-height: 50px;
+}
+.btn-back:hover { border-color: var(--p); color: var(--p); }
+.step-nav .btn-next,
+.step-nav .f-submit { flex: 2; border-radius: var(--r); }
+
+/* Service card picker */
+.svc-picker {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+.sp-opt {
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  display: block;
+}
+.sp-opt input[type="radio"] {
+  position: absolute;
+  opacity: 0;
+  width: 0; height: 0;
+  pointer-events: none;
+}
+.sp-card {
+  border: 1.5px solid var(--bdr);
+  border-radius: var(--r);
+  padding: 18px 12px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+  transition: border-color .22s, background .22s, box-shadow .22s, transform .22s;
+  background: var(--surf);
+  cursor: pointer;
+}
+.sp-card:hover {
+  border-color: rgba(164,125,196,.5);
+  background: rgba(164,125,196,.04);
+  transform: translateY(-2px);
+}
+.sp-opt input:checked + .sp-card {
+  border-color: var(--p);
+  background: rgba(164,125,196,.09);
+  box-shadow: 0 0 0 3px rgba(164,125,196,.16);
+  transform: translateY(-2px);
+}
+.sp-ico { font-size: 28px; line-height: 1; }
+.sp-card strong {
+  font-size: 12px; font-weight: 600;
+  color: var(--text); line-height: 1.3;
+}
+
+/* Drive / portfolio gallery card */
+.g-drive {
+  background: linear-gradient(135deg, var(--a1) 0%, var(--a2) 100%) !important;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  transition: transform .25s, box-shadow .25s !important;
+  text-decoration: none !important;
+  border: none;
+  cursor: pointer;
+}
+.g-drive:hover { transform: scale(1.03) !important; box-shadow: var(--sh-lg); text-decoration: none; }
+.g-drive-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 16px;
+  width: 100%; height: 100%;
+}
+.g-drive-inner span { font-size: 36px; line-height: 1; }
+.g-drive-inner strong {
+  font-size: 13px; font-weight: 700;
+  color: var(--text); text-align: center; line-height: 1.3;
+}
+.g-drive-inner small { font-size: 11.5px; color: var(--muted); }
+
+/* Dark mode additions */
+body.dark .sp-card { background: var(--surf); }
+body.dark .sp-opt input:checked + .sp-card { background: rgba(164,125,196,.18); }
+body.dark .g-drive { background: linear-gradient(135deg, rgba(164,125,196,.22), rgba(249,230,240,.08)) !important; }
+body.dark .step-hd h3 { color: #EBDCFD; }
+body.dark .step-hd p  { color: #c9b0e8; }
+body.dark .sp-card strong { color: #EBDCFD; }
+body.dark .btn-back { color: #c9b0e8; border-color: rgba(200,160,255,.2); }
+body.dark .btn-back:hover { border-color: var(--p-lt); color: #d7aaff; }
+body.dark .g-drive-inner strong { color: #EBDCFD; }
+body.dark .g-drive-inner small  { color: #c9b0e8; }
 
 /* ── 3. Animated Background ────────────────────────────────── */
 .bg-scene {
@@ -998,6 +1152,13 @@ textarea { resize: vertical; min-height: 84px; }
 @keyframes fadeIn {
   from { opacity: 0; }
   to   { opacity: 1; }
+}
+@keyframes shakeField {
+  0%,100% { transform: translateX(0); }
+  20%     { transform: translateX(-6px); }
+  40%     { transform: translateX(6px); }
+  60%     { transform: translateX(-4px); }
+  80%     { transform: translateX(4px); }
 }
 
 /* ════════════════════════════════════════════════════════════

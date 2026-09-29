@@ -1,10 +1,10 @@
 'use strict';
 
-const LOAD_AT      = Date.now();
-const MIN_FILL_MS  = 2500;
-const EJS_KEY      = 'snAKDj3jg8ZKWcxY_';
-const EJS_SVC      = 'service_bm9h6wp';
-const EJS_TPL      = 'template_v5hjt9o';
+const LOAD_AT     = Date.now();
+const MIN_FILL_MS = 2000;
+const EJS_KEY     = 'snAKDj3jg8ZKWcxY_';
+const EJS_SVC     = 'service_bm9h6wp';
+const EJS_TPL     = 'template_v5hjt9o';
 
 document.addEventListener('DOMContentLoaded', () => {
   initEmailJS();
@@ -14,6 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initFloatBtn();
   initReveal();
   initPickers();
+  initMultiStep();
   initGallery();
   initForm();
 });
@@ -96,7 +97,7 @@ function initReveal() {
     entries => entries.forEach(e => {
       if (e.isIntersecting) { e.target.classList.add('vis'); io.unobserve(e.target); }
     }),
-    { threshold: 0.08 }
+    { threshold: 0.07 }
   );
   els.forEach(el => io.observe(el));
 }
@@ -125,6 +126,76 @@ function initPickers() {
   });
 }
 
+/* ── Multi-step Form ─────────────────────────────────────────── */
+function initMultiStep() {
+  const steps  = Array.from(document.querySelectorAll('.f-step'));
+  const dots   = Array.from(document.querySelectorAll('.step-dot'));
+  const status = document.getElementById('fstatus');
+  if (!steps.length) return;
+
+  let cur = 0;
+
+  function goTo(n, isBack = false) {
+    steps[cur].classList.remove('act', 'back-anim');
+    dots[cur]?.classList.remove('act');
+    cur = Math.max(0, Math.min(n, steps.length - 1));
+    steps[cur].classList.add('act');
+    if (isBack) steps[cur].classList.add('back-anim');
+    dots[cur]?.classList.add('act');
+    if (status) { status.textContent = ''; status.style.color = ''; }
+  }
+
+  function validateStep(i) {
+    if (i === 0) {
+      const name  = val('from_name');
+      const phone = val('phone');
+      if (!name)  { shake(document.getElementById('from_name')); setStatus('Please enter your name 💕', 'err'); return false; }
+      if (!phone) { shake(document.getElementById('phone'));     setStatus('Please enter your phone number 💕', 'err'); return false; }
+      return true;
+    }
+    if (i === 1) {
+      const date = val('fdate');
+      const time = val('ftime');
+      if (!date) { setStatus('Please pick a date 📅', 'err'); return false; }
+      if (!time) { setStatus('Please pick a time ⏰', 'err'); return false; }
+      return true;
+    }
+    return true;
+  }
+
+  // Wire Next buttons
+  document.querySelectorAll('.btn-next').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (validateStep(cur)) goTo(+btn.dataset.next, false);
+    });
+  });
+
+  // Wire Back buttons
+  document.querySelectorAll('.btn-back').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (status) { status.textContent = ''; }
+      goTo(+btn.dataset.back, true);
+    });
+  });
+
+  function setStatus(msg, type) {
+    if (!status) return;
+    status.textContent = msg;
+    status.style.color = type === 'err' ? '#c0392b' : type === 'ok' ? '#22863a' : 'var(--muted)';
+  }
+
+  function shake(el) {
+    if (!el) return;
+    el.style.animation = 'none';
+    el.offsetHeight; // reflow
+    el.style.animation = 'shakeField .4s ease';
+    el.addEventListener('animationend', () => { el.style.animation = ''; }, { once: true });
+  }
+
+  // Expose setStatus for form submission
+  window._mfSetStatus = setStatus;
+}
+
 /* ── Gallery + Lightbox ──────────────────────────────────────── */
 function initGallery() {
   const grid  = document.getElementById('gal');
@@ -136,11 +207,11 @@ function initGallery() {
   const dots  = document.getElementById('lb-dots');
   if (!grid || !lbox || !limg) return;
 
-  const items = Array.from(grid.querySelectorAll('.g-item'));
+  // Only <button> elements are gallery items (not the g-drive anchor)
+  const items = Array.from(grid.querySelectorAll('button.g-item'));
   const imgs  = items.map(el => el.querySelector('img'));
   let cur = 0, touchX = 0;
 
-  /* Build dot indicators */
   if (dots) {
     imgs.forEach((_, i) => {
       const d = document.createElement('div');
@@ -150,10 +221,7 @@ function initGallery() {
   }
 
   function updateDots() {
-    if (!dots) return;
-    dots.querySelectorAll('.lb-dot').forEach((d, i) =>
-      d.classList.toggle('act', i === cur)
-    );
+    dots?.querySelectorAll('.lb-dot').forEach((d, i) => d.classList.toggle('act', i === cur));
   }
 
   function show(i) {
@@ -175,7 +243,6 @@ function initGallery() {
   ln?.addEventListener('click', () => show(cur + 1));
   lbox.addEventListener('click', e => { if (e.target === lbox) hide(); });
 
-  /* Keyboard */
   document.addEventListener('keydown', e => {
     if (lbox.hasAttribute('hidden')) return;
     if (e.key === 'Escape')     hide();
@@ -183,11 +250,9 @@ function initGallery() {
     if (e.key === 'ArrowRight') show(cur + 1);
   });
 
-  /* Touch swipe on lightbox */
-  lbox.addEventListener('touchstart', e => {
-    touchX = e.touches[0].clientX;
-  }, { passive: true });
-  lbox.addEventListener('touchend', e => {
+  // Touch swipe
+  lbox.addEventListener('touchstart', e => { touchX = e.touches[0].clientX; }, { passive: true });
+  lbox.addEventListener('touchend',   e => {
     const diff = touchX - e.changedTouches[0].clientX;
     if (Math.abs(diff) > 45) show(cur + (diff > 0 ? 1 : -1));
   }, { passive: true });
@@ -200,47 +265,59 @@ function initForm() {
   const sbtn   = document.getElementById('sbtn');
   if (!form) return;
 
+  const setStatus = window._mfSetStatus || function(msg, type) {
+    if (!status) return;
+    status.textContent = msg;
+    status.style.color = type === 'ok' ? '#22863a' : type === 'err' ? '#c0392b' : 'var(--muted)';
+  };
+
   form.addEventListener('submit', async e => {
     e.preventDefault();
 
-    /* Bot checks */
+    // Honeypot
     if (form.querySelector('input[name="_h"]')?.value) return;
+
+    // Fill-time bot check
     if (Date.now() - LOAD_AT < MIN_FILL_MS) {
-      setStatus('Please take a moment to fill the form carefully 🌸', 'info');
+      setStatus('Please fill the form carefully 🌸', 'info');
       return;
     }
 
-    const name = val('from_name'), phone = val('phone'),
-          date = val('fdate'),    time  = val('ftime');
+    // Collect values
+    const name  = val('from_name');
+    const phone = val('phone');
+    const date  = val('fdate');
+    const time  = val('ftime');
+    const svc   = (form.querySelector('input[name="service"]:checked')?.value || 'Custom Design');
+    const msg   = val('msg');
+
     if (!name || !phone || !date || !time) {
-      setStatus('Please fill in Name, Phone, Date and Time 💕', 'err');
+      setStatus('Please complete all steps first 💕', 'err');
       return;
     }
 
     setLoad(true);
+    setStatus('Sending… 🌷', 'info');
 
-    const payload = {
-      from_name: name, phone,
-      instagram: '',
-      email: '',
-      date, time,
-      service: val('service') || 'Custom Design',
-      message: val('msg'),
-    };
+    const payload = { from_name: name, phone, date, time, service: svc, message: msg, instagram: '', email: '' };
 
-    let ok = false;
+    let ok = false, waOk = false;
 
-    /* 1. Vercel API */
+    // 1. Vercel API (primary — WhatsApp + Email + DB)
     try {
-      const r = await fetch('/api/send-whatsapp', {
+      const r    = await fetch('/api/send-whatsapp', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
         body:    JSON.stringify(payload),
       });
-      if (r.ok) ok = true;
+      const data = await r.json().catch(() => ({}));
+      if (r.ok && data.ok) {
+        ok   = true;
+        waOk = data.whatsapp === true;
+      }
     } catch (_) {}
 
-    /* 2. EmailJS fallback */
+    // 2. EmailJS fallback (if primary failed)
     if (!ok && window.emailjs) {
       try {
         await emailjs.send(EJS_SVC, EJS_TPL, payload);
@@ -252,9 +329,15 @@ function initForm() {
 
     if (ok) {
       form.reset();
-      setStatus('Sent! 💖 We\'ll confirm your appointment within 24 hours.', 'ok');
+      // Reset multi-step back to step 0
+      document.querySelectorAll('.f-step').forEach((s, i) => {
+        s.classList.toggle('act', i === 0);
+        s.classList.remove('back-anim');
+      });
+      document.querySelectorAll('.step-dot').forEach((d, i) => d.classList.toggle('act', i === 0));
+      setStatus('Enquiry sent! 💖 We\'ll confirm your appointment within 24 hours.', 'ok');
     } else {
-      setStatus('Something went wrong — please email us or reach us on Instagram 🌸', 'err');
+      setStatus('Something went wrong — please email us or DM on Instagram 🌸', 'err');
     }
   });
 
@@ -263,12 +346,5 @@ function initForm() {
     if (!sbtn) return;
     sbtn.disabled    = on;
     sbtn.textContent = on ? 'Sending… 🌷' : 'Send Enquiry 💌';
-  }
-  function setStatus(msg, type) {
-    if (!status) return;
-    status.textContent = msg;
-    status.style.color =
-      type === 'ok'  ? '#22863a' :
-      type === 'err' ? '#c0392b' : 'var(--muted)';
   }
 }
