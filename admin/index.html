@@ -216,7 +216,13 @@
 
   <!-- Supabase JS client -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="js/dashboard.js"></script>
+  <script>
+    window.FloralynConfig = {
+      SUPABASE_URL:      'https://znycuzuveqhybqgevjvj.supabase.co',
+      SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpueWN1enV2ZXFoeWJxZ2V2anZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA2MTcyMTQsImV4cCI6MjEwNjE5MzIxNH0.cPYdpp6peTFX4e88K4yb8f1tbaV96ifqoy7TrCyEAxQ',
+    };
+  </script>
+  <script src="/admin/js/dashboard.js"></script>
   <script>
     // Login page logic — uses the FloralynAdmin class from dashboard.js
     document.addEventListener('DOMContentLoaded', async function () {
