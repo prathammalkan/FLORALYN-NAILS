@@ -1,9 +1,9 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Admin Login — Floralyn</title>
+  <title>Admin Login â€” Floralyn</title>
   <meta name="robots" content="noindex, nofollow" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -176,7 +176,7 @@
     </div>
 
     <div class="config-warning" id="config-warning">
-      ⚠️ <strong>Setup required.</strong> Please open <code>admin/js/dashboard.js</code> and replace
+      âš ï¸ <strong>Setup required.</strong> Please open <code>admin/js/dashboard.js</code> and replace
       <code>YOUR_SUPABASE_URL</code> and <code>YOUR_SUPABASE_ANON_KEY</code> with your Supabase project credentials.
       See <code>.env.example</code> for instructions.
     </div>
@@ -210,7 +210,7 @@
     </form>
 
     <div class="back-link">
-      <a href="../index.html">← Back to website</a>
+      <a href="../index.html">â† Back to website</a>
     </div>
   </div>
 
@@ -224,7 +224,7 @@
   </script>
   <script src="/admin/js/dashboard.js"></script>
   <script>
-    // Login page logic — uses the FloralynAdmin class from dashboard.js
+    // Login page logic â€” uses the FloralynAdmin class from dashboard.js
     document.addEventListener('DOMContentLoaded', async function () {
       const { SUPABASE_URL, SUPABASE_ANON_KEY } = window.FloralynConfig || {};
 
@@ -239,7 +239,7 @@
       // If already authenticated, go to dashboard
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
-        window.location.href = 'dashboard.html';
+        window.location.href = '/admin/dashboard.html';
         return;
       }
 
@@ -260,7 +260,7 @@
         }
 
         btn.disabled = true;
-        btn.textContent = 'Signing in…';
+        btn.textContent = 'Signing inâ€¦';
         errEl.style.display = 'none';
 
         try {
@@ -278,7 +278,7 @@
               access_token: data.session.access_token,
               refresh_token: data.session.refresh_token
             });
-            window.location.href = 'dashboard.html';
+            window.location.href = '/admin/dashboard.html';
             return;
           }
 
@@ -286,7 +286,7 @@
           const fallbackEmail = username.includes('@') && username.includes('.') ? username : username + '@1311.com';
           const { error } = await supabase.auth.signInWithPassword({ email: fallbackEmail, password });
           if (!error) {
-            window.location.href = 'dashboard.html';
+            window.location.href = '/admin/dashboard.html';
             return;
           }
 

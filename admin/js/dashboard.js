@@ -1,14 +1,14 @@
-// admin/js/dashboard.js
-// Floralyn Admin Dashboard — Complete SPA Logic
+﻿// admin/js/dashboard.js
+// Floralyn Admin Dashboard â€” Complete SPA Logic
 // Uses Supabase JS v2 for auth, database, and storage
 
 'use strict';
 
 // ================================================================
-// ⚙️ CONFIGURATION
+// âš™ï¸ CONFIGURATION
 // Replace these with your actual Supabase project credentials.
-// Get them from: https://supabase.com/dashboard → your project → Settings → API
-// The ANON KEY is safe for browser use — RLS enforces all access control.
+// Get them from: https://supabase.com/dashboard â†’ your project â†’ Settings â†’ API
+// The ANON KEY is safe for browser use â€” RLS enforces all access control.
 // NEVER use the service_role key here.
 // ================================================================
 window.FloralynConfig = {
@@ -27,12 +27,12 @@ class FloralynAdmin {
     this._confirmResolve = null;
   }
 
-  // ── Initialization ─────────────────────────────────────────────
+  // â”€â”€ Initialization â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   async init() {
     const { SUPABASE_URL, SUPABASE_ANON_KEY } = window.FloralynConfig;
 
     if (!SUPABASE_URL || SUPABASE_URL === 'YOUR_SUPABASE_URL') {
-      // Config not set — handled by login page
+      // Config not set â€” handled by login page
       return;
     }
 
@@ -45,11 +45,11 @@ class FloralynAdmin {
     const { data: { session } } = await this.db.auth.getSession();
 
     if (!session) {
-      window.location.href = 'index.html';
+      window.location.href = '/admin/';
       return;
     }
 
-    // Auth confirmed — show app
+    // Auth confirmed â€” show app
     document.getElementById('auth-loading').style.display = 'none';
     document.getElementById('app').style.display = 'flex';
 
@@ -66,12 +66,12 @@ class FloralynAdmin {
     // Auto-refresh auth session silently
     this.db.auth.onAuthStateChange((event) => {
       if (event === 'SIGNED_OUT') {
-        window.location.href = 'index.html';
+        window.location.href = '/admin/';
       }
     });
   }
 
-  // ── Navigation ─────────────────────────────────────────────────
+  // â”€â”€ Navigation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   bindNavigation() {
     document.querySelectorAll('[data-view]').forEach(btn => {
       btn.addEventListener('click', () => {
@@ -122,7 +122,7 @@ class FloralynAdmin {
     if (loaders[view]) await loaders[view]();
   }
 
-  // ── Mobile Sidebar ─────────────────────────────────────────────
+  // â”€â”€ Mobile Sidebar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   bindMobileHeader() {
     const hamburger = document.getElementById('hamburger-btn');
     const overlay   = document.getElementById('sidebar-overlay');
@@ -148,18 +148,18 @@ class FloralynAdmin {
     document.getElementById('sidebar-overlay')?.classList.remove('visible');
   }
 
-  // ── Logout ─────────────────────────────────────────────────────
+  // â”€â”€ Logout â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   bindLogout() {
     document.getElementById('logout-btn')?.addEventListener('click', async () => {
       const confirmed = await this.confirm('Sign out of Floralyn Admin?', 'Sign Out');
       if (!confirmed) return;
       await this.audit('LOGOUT', null, null, {});
       await this.db.auth.signOut();
-      window.location.href = 'index.html';
+      window.location.href = '/admin/';
     });
   }
 
-  // ── Dashboard ──────────────────────────────────────────────────
+  // â”€â”€ Dashboard â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   async loadDashboard() {
     const today = new Date().toISOString().split('T')[0];
     const plus7 = new Date(Date.now() + 7 * 864e5).toISOString().split('T')[0];
@@ -202,7 +202,7 @@ class FloralynAdmin {
     if (!container) return;
 
     if (!recent || recent.length === 0) {
-      container.innerHTML = this.emptyState('📅', 'No appointments yet');
+      container.innerHTML = this.emptyState('ðŸ“…', 'No appointments yet');
       return;
     }
 
@@ -212,7 +212,7 @@ class FloralynAdmin {
     });
   }
 
-  // ── Appointments ───────────────────────────────────────────────
+  // â”€â”€ Appointments â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   async loadAppointments() {
     const status  = document.getElementById('filter-status')?.value  || 'ALL';
     const search  = (document.getElementById('filter-search')?.value || '').trim().toLowerCase();
@@ -245,7 +245,7 @@ class FloralynAdmin {
     }
 
     if (appts.length === 0) {
-      container.innerHTML = this.emptyState('📅', 'No appointments found matching your filters');
+      container.innerHTML = this.emptyState('ðŸ“…', 'No appointments found matching your filters');
       return;
     }
 
@@ -284,16 +284,16 @@ class FloralynAdmin {
   renderApptCard(a) {
     const date = a.preferred_date
       ? new Date(a.preferred_date + 'T00:00:00').toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
-      : '—';
+      : 'â€”';
 
     return `
       <div class="appt-card" data-id="${this.esc(a.id)}" tabindex="0" role="button"
            aria-label="View appointment for ${this.esc(a.name)}">
         <div>
           <div class="appt-name">${this.esc(a.name)}</div>
-          <div class="appt-phone">📞 ${this.esc(a.phone)}</div>
-          <div class="appt-service">💅 ${this.esc(a.service)}</div>
-          <div class="appt-meta">📅 ${date} • ${this.esc(a.preferred_time || '—')}</div>
+          <div class="appt-phone">ðŸ“ž ${this.esc(a.phone)}</div>
+          <div class="appt-service">ðŸ’… ${this.esc(a.service)}</div>
+          <div class="appt-meta">ðŸ“… ${date} â€¢ ${this.esc(a.preferred_time || 'â€”')}</div>
         </div>
         <div class="appt-right">
           <span class="badge badge-${this.esc(a.status)}">${this.esc(a.status)}</span>
@@ -315,10 +315,10 @@ class FloralynAdmin {
 
     const date = a.preferred_date
       ? new Date(a.preferred_date + 'T00:00:00').toLocaleDateString('en-IN', { dateStyle: 'long' })
-      : '—';
+      : 'â€”';
     const created = a.created_at
       ? new Date(a.created_at).toLocaleString('en-IN')
-      : '—';
+      : 'â€”';
 
     const body = document.getElementById('appt-modal-body');
     const foot = document.getElementById('appt-modal-footer');
@@ -347,7 +347,7 @@ class FloralynAdmin {
         </div>
         <div class="appt-detail-field">
           <label>Time</label>
-          <p>${this.esc(a.preferred_time || '—')}</p>
+          <p>${this.esc(a.preferred_time || 'â€”')}</p>
         </div>
         <div class="appt-detail-field appt-detail-full">
           <label>Service</label>
@@ -374,20 +374,20 @@ class FloralynAdmin {
 
       <div class="status-actions">
         <span style="font-size:12px;color:var(--text-muted);align-self:center;">Change status:</span>
-        ${a.status !== 'CONFIRMED'  ? `<button class="status-btn btn-confirm"  data-status="CONFIRMED">✅ Confirm</button>`    : ''}
-        ${a.status !== 'DECLINED'   ? `<button class="status-btn btn-decline"  data-status="DECLINED">❌ Decline</button>`    : ''}
-        ${a.status !== 'COMPLETED'  ? `<button class="status-btn btn-complete" data-status="COMPLETED">🏁 Complete</button>` : ''}
-        ${a.status !== 'CANCELLED'  ? `<button class="status-btn btn-cancel"   data-status="CANCELLED">🚫 Cancel</button>`   : ''}
+        ${a.status !== 'CONFIRMED'  ? `<button class="status-btn btn-confirm"  data-status="CONFIRMED">âœ… Confirm</button>`    : ''}
+        ${a.status !== 'DECLINED'   ? `<button class="status-btn btn-decline"  data-status="DECLINED">âŒ Decline</button>`    : ''}
+        ${a.status !== 'COMPLETED'  ? `<button class="status-btn btn-complete" data-status="COMPLETED">ðŸ Complete</button>` : ''}
+        ${a.status !== 'CANCELLED'  ? `<button class="status-btn btn-cancel"   data-status="CANCELLED">ðŸš« Cancel</button>`   : ''}
       </div>
 
       <div class="appt-notes-group">
         <label for="appt-notes-input">Private Notes (owner only)</label>
-        <textarea id="appt-notes-input" placeholder="Add internal notes…" maxlength="2000">${this.esc(a.notes || '')}</textarea>
+        <textarea id="appt-notes-input" placeholder="Add internal notesâ€¦" maxlength="2000">${this.esc(a.notes || '')}</textarea>
       </div>`;
 
     foot.innerHTML = `
-      <button class="btn-secondary" id="appt-delete-btn">🗑️ Delete</button>
-      <button class="btn-secondary" id="appt-notes-save">💾 Save Notes</button>
+      <button class="btn-secondary" id="appt-delete-btn">ðŸ—‘ï¸ Delete</button>
+      <button class="btn-secondary" id="appt-notes-save">ðŸ’¾ Save Notes</button>
       <button class="btn-primary" id="appt-modal-done">Done</button>`;
 
     // Status change buttons
@@ -448,7 +448,7 @@ class FloralynAdmin {
 
   closeApptModal() { this.closeModal('appt-modal-overlay'); }
 
-  // ── Gallery ────────────────────────────────────────────────────
+  // â”€â”€ Gallery â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   async loadGallery() {
     const { data, error } = await this.db
       .from('gallery')
@@ -464,7 +464,7 @@ class FloralynAdmin {
     }
 
     if (!data || data.length === 0) {
-      container.innerHTML = this.emptyState('🖼️', 'No photos yet — upload your first gallery image!');
+      container.innerHTML = this.emptyState('ðŸ–¼ï¸', 'No photos yet â€” upload your first gallery image!');
       return;
     }
 
@@ -475,11 +475,11 @@ class FloralynAdmin {
           alt="${this.esc(item.alt_text || 'Gallery image')}"
           loading="lazy" />
         <div class="gallery-item-controls">
-          <button class="btn-edit-gallery" data-id="${this.esc(item.id)}" title="Edit alt text and title">✏️ Edit</button>
+          <button class="btn-edit-gallery" data-id="${this.esc(item.id)}" title="Edit alt text and title">âœï¸ Edit</button>
           <button class="btn-toggle-gallery" data-id="${this.esc(item.id)}" data-visible="${item.visible}" title="${item.visible ? 'Hide' : 'Show'}">
-            ${item.visible ? '👁️ Hide' : '🙈 Show'}
+            ${item.visible ? 'ðŸ‘ï¸ Hide' : 'ðŸ™ˆ Show'}
           </button>
-          <button class="btn-del btn-del-gallery" data-id="${this.esc(item.id)}" title="Delete photo">🗑️</button>
+          <button class="btn-del btn-del-gallery" data-id="${this.esc(item.id)}" title="Delete photo">ðŸ—‘ï¸</button>
         </div>
       </div>`).join('');
 
@@ -619,7 +619,7 @@ class FloralynAdmin {
     await this.loadGallery();
   }
 
-  // ── Services ───────────────────────────────────────────────────
+  // â”€â”€ Services â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   async loadServices() {
     const { data, error } = await this.db
       .from('services')
@@ -635,7 +635,7 @@ class FloralynAdmin {
     }
 
     if (!data || data.length === 0) {
-      container.innerHTML = this.emptyState('💅', 'No services yet. Click "+ Add Service" to create one.');
+      container.innerHTML = this.emptyState('ðŸ’…', 'No services yet. Click "+ Add Service" to create one.');
       return;
     }
 
@@ -650,8 +650,8 @@ class FloralynAdmin {
           ${s.description ? `<div class="service-desc">${this.esc(s.description)}</div>` : ''}
         </div>
         <div class="service-actions">
-          <button class="btn-secondary btn-edit-service" data-id="${this.esc(s.id)}" style="font-size:12px;padding:6px 12px;">✏️ Edit</button>
-          <button class="btn-secondary btn-del-service" data-id="${this.esc(s.id)}" style="font-size:12px;padding:6px 12px;color:var(--danger);border-color:var(--danger)">🗑️</button>
+          <button class="btn-secondary btn-edit-service" data-id="${this.esc(s.id)}" style="font-size:12px;padding:6px 12px;">âœï¸ Edit</button>
+          <button class="btn-secondary btn-del-service" data-id="${this.esc(s.id)}" style="font-size:12px;padding:6px 12px;color:var(--danger);border-color:var(--danger)">ðŸ—‘ï¸</button>
         </div>
       </div>`).join('');
 
@@ -704,7 +704,7 @@ class FloralynAdmin {
     await this.loadServices();
   }
 
-  // ── Settings ───────────────────────────────────────────────────
+  // â”€â”€ Settings â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   async loadSettings() {
     const { data } = await this.db.from('settings').select('*');
     if (!data) return;
@@ -752,7 +752,7 @@ class FloralynAdmin {
 
       const statusEl = document.getElementById('settings-status');
       if (statusEl) {
-        statusEl.textContent = '✅ Settings saved!';
+        statusEl.textContent = 'âœ… Settings saved!';
         setTimeout(() => { statusEl.textContent = ''; }, 3000);
       }
 
@@ -760,7 +760,7 @@ class FloralynAdmin {
     });
   }
 
-  // ── Audit Log ──────────────────────────────────────────────────
+  // â”€â”€ Audit Log â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   async loadAuditLog() {
     const { data, error } = await this.db
       .from('audit_log')
@@ -777,7 +777,7 @@ class FloralynAdmin {
     }
 
     if (!data || data.length === 0) {
-      container.innerHTML = this.emptyState('📝', 'No audit entries yet.');
+      container.innerHTML = this.emptyState('ðŸ“', 'No audit entries yet.');
       return;
     }
 
@@ -786,7 +786,7 @@ class FloralynAdmin {
         <div class="audit-time">${new Date(entry.created_at).toLocaleString('en-IN')}</div>
         <div>
           <div class="audit-action">${this.esc(entry.action)}</div>
-          <div class="audit-details">${entry.entity_type ? `${this.esc(entry.entity_type)} · ` : ''}${entry.entity_id ? `${this.esc(entry.entity_id.slice(0, 8))}` : ''}</div>
+          <div class="audit-details">${entry.entity_type ? `${this.esc(entry.entity_type)} Â· ` : ''}${entry.entity_id ? `${this.esc(entry.entity_id.slice(0, 8))}` : ''}</div>
         </div>
       </div>`).join('');
   }
@@ -800,11 +800,11 @@ class FloralynAdmin {
         details:     details    || {},
       });
     } catch (_) {
-      // Non-fatal — audit failure should never block the operation
+      // Non-fatal â€” audit failure should never block the operation
     }
   }
 
-  // ── Modal infrastructure ───────────────────────────────────────
+  // â”€â”€ Modal infrastructure â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   bindModals() {
     // Appointment modal close
     document.getElementById('appt-modal-close')?.addEventListener('click', () => this.closeApptModal());
@@ -895,7 +895,7 @@ class FloralynAdmin {
     await this.loadGallery();
   }
 
-  // Confirm dialog — returns Promise<boolean>
+  // Confirm dialog â€” returns Promise<boolean>
   confirm(message, actionLabel = 'Confirm', isDanger = false) {
     return new Promise(resolve => {
       this._confirmResolve = resolve;
@@ -915,7 +915,7 @@ class FloralynAdmin {
     }
   }
 
-  // ── Toast ──────────────────────────────────────────────────────
+  // â”€â”€ Toast â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   toast(message, type = 'info') {
     const el = document.getElementById('toast');
     if (!el) return;
@@ -925,7 +925,7 @@ class FloralynAdmin {
     this._toastTimer = setTimeout(() => { el.className = 'toast'; }, 3500);
   }
 
-  // ── Utilities ──────────────────────────────────────────────────
+  // â”€â”€ Utilities â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   esc(str) {
     if (str == null) return '';
     return String(str)
@@ -957,7 +957,7 @@ class FloralynAdmin {
   }
 }
 
-// ── Boot ────────────────────────────────────────────────────────
+// â”€â”€ Boot â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Only run on dashboard.html, not on index.html
 document.addEventListener('DOMContentLoaded', () => {
   if (document.getElementById('app')) {
