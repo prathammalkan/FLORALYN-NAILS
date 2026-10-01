@@ -213,7 +213,6 @@
       <a href="../index.html">â† Back to website</a>
     </div>
   </div>
-
   <!-- Supabase JS client -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
@@ -224,7 +223,6 @@
   </script>
   <script src="/admin/js/dashboard.js"></script>
   <script>
-    // Login page logic â€” uses the FloralynAdmin class from dashboard.js
     document.addEventListener('DOMContentLoaded', async function () {
       const { SUPABASE_URL, SUPABASE_ANON_KEY } = window.FloralynConfig || {};
 
@@ -236,69 +234,81 @@
 
       const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-      // If already authenticated, go to dashboard
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        window.location.href = '/admin/dashboard.html';
-        return;
-      }
+      // Already signed in — go straight to dashboard
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) { window.location.href = '/admin/dashboard.html'; return; }
+      } catch (_) {}
 
-      const form    = document.getElementById('login-form');
-      const btn     = document.getElementById('login-btn');
-      const errEl   = document.getElementById('login-error');
+      const form  = document.getElementById('login-form');
+      const btn   = document.getElementById('login-btn');
+      const errEl = document.getElementById('login-error');
+
+      // Client-side lockout: 3 failures -> 60s cooldown
+      let failCount   = 0;
+      let lockedUntil = 0;
+
+      function showErr(msg) {
+        errEl.textContent    = msg;
+        errEl.style.display  = 'block';
+        btn.disabled         = false;
+        btn.textContent      = 'Sign In';
+      }
 
       form.addEventListener('submit', async function (e) {
         e.preventDefault();
 
-        const username = document.getElementById('login-email').value.trim();
-        const password = document.getElementById('login-password').value;
-
-        if (!username || !password) {
-          errEl.textContent = 'Please enter your username and password.';
-          errEl.style.display = 'block';
+        if (Date.now() < lockedUntil) {
+          const secs = Math.ceil((lockedUntil - Date.now()) / 1000);
+          showErr('Too many failed attempts. Try again in ' + secs + 's.');
+          btn.disabled = true;
           return;
         }
 
-        btn.disabled = true;
-        btn.textContent = 'Signing inâ€¦';
+        const username = document.getElementById('login-email').value.trim();
+        const password = document.getElementById('login-password').value;
+
+        if (!username || !password) { showErr('Please enter your username and password.'); return; }
+
+        btn.disabled    = true;
+        btn.textContent = 'Signing in...';
         errEl.style.display = 'none';
 
         try {
-          // 1. Authenticate via secure backend endpoint
-          const res = await fetch('/api/admin-login', {
-            method: 'POST',
+          // Authentication goes through secure server-side endpoint ONLY — no direct Supabase calls
+          const res  = await fetch('/api/admin-login', {
+            method:  'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, password })
+            body:    JSON.stringify({ username, password }),
           });
+          const data = await res.json().catch(function() { return {}; });
 
-          const data = await res.json().catch(() => ({}));
+          if (res.status === 429) {
+            lockedUntil = Date.now() + 15 * 60 * 1000;
+            showErr('Too many attempts. Locked for 15 minutes.');
+            return;
+          }
 
           if (res.ok && data.ok && data.session) {
+            failCount = 0;
             await supabase.auth.setSession({
-              access_token: data.session.access_token,
-              refresh_token: data.session.refresh_token
+              access_token:  data.session.access_token,
+              refresh_token: data.session.refresh_token,
             });
             window.location.href = '/admin/dashboard.html';
             return;
           }
 
-          // 2. Direct fallback (in case API route unavailable)
-          const fallbackEmail = username.includes('@') && username.includes('.') ? username : username + '@1311.com';
-          const { error } = await supabase.auth.signInWithPassword({ email: fallbackEmail, password });
-          if (!error) {
-            window.location.href = '/admin/dashboard.html';
-            return;
+          failCount++;
+          if (failCount >= 3) {
+            lockedUntil = Date.now() + 60 * 1000;
+            showErr('Too many failed attempts. Wait 60 seconds and try again.');
+          } else {
+            showErr((data && data.error) ? data.error : 'Invalid username or password. Please try again.');
           }
 
-          errEl.textContent = (data && data.error) ? data.error : 'Invalid username or password. Please try again.';
-          errEl.style.display = 'block';
-          btn.disabled = false;
-          btn.textContent = 'Sign In';
-        } catch (err) {
-          errEl.textContent = 'Sign in failed. Please try again.';
-          errEl.style.display = 'block';
-          btn.disabled = false;
-          btn.textContent = 'Sign In';
+        } catch (_) {
+          showErr('Connection error. Check your network and try again.');
         }
       });
     });

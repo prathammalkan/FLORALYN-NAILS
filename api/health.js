@@ -1,15 +1,13 @@
-// api/health.js — diagnostic endpoint (safe — reveals no secrets)
+// api/health.js — diagnostic endpoint (safe — no secrets revealed)
 'use strict';
 module.exports = function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
   res.status(200).json({
-    twilio_sid:    !!process.env.TWILIO_ACCOUNT_SID,
-    twilio_auth:   !!process.env.TWILIO_AUTH_TOKEN,
-    twilio_from:   process.env.TWILIO_WHATSAPP_FROM || 'NOT SET',
-    twilio_to:     process.env.DEST_WHATSAPP_TO     || 'NOT SET',
-    resend:        !!process.env.RESEND_API_KEY,
-    supabase_url:  !!process.env.SUPABASE_URL,
-    supabase_key:  !!process.env.SUPABASE_SERVICE_ROLE_KEY,
-    owner_email:   process.env.OWNER_EMAIL || 'NOT SET',
+    ok:          true,
+    resend:      !!process.env.RESEND_API_KEY,
+    supabase:    !!process.env.SUPABASE_URL,
+    telegram:    !!process.env.TELEGRAM_BOT_TOKEN,
+    admin_auth:  !!(process.env.ADMIN_USERNAME && process.env.ADMIN_PASSWORD),
+    ts:          new Date().toISOString(),
   });
 };
