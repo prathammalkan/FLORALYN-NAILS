@@ -1824,25 +1824,8 @@ body.dark .logo-name { color: #EBDCFD; }
   padding-top: 14px;
 }
 
-/* Footer WhatsApp link */
-.ftr-wa-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 14px;
-  color: var(--muted);
-  font-weight: 500;
-  margin-top: 4px;
-}
-.ftr-wa-link:hover { color: #25d366; text-decoration: none; }
+/* Footer note */
 .ftr-note { font-size: 12px !important; opacity: .75; }
-
-/* Drawer WhatsApp button */
-.drawer-wa {
-  font-size: 13px;
-  padding: 11px 18px;
-  margin-bottom: 8px;
-}
 
 /* ════════════════════════════════════════════════════════════
    DARK MODE — new sections
@@ -1869,6 +1852,4 @@ body.dark .stat-item strong { color: #EBDCFD; }
 body.dark .stat-divider { background: rgba(200,160,255,.15); }
 body.dark .svc-meta { border-top-color: rgba(200,160,255,.12); }
 body.dark .svc-duration { background: rgba(164,125,196,.15); color: #c9b0e8; }
-body.dark .ftr-wa-link { color: #c9b0e8; }
-body.dark .ftr-wa-link:hover { color: #25d366; }
 body.dark .sec-hd a { color: var(--p-lt); }
