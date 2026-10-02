@@ -61,6 +61,22 @@
 </head>
 <body>
 
+<!-- ═══ INTRO PRELOADER ════════════════════════════════════════ -->
+<div id="intro" aria-hidden="true" aria-label="Loading Floralyn">
+  <div class="intro-bg"></div>
+  <div class="intro-content">
+    <div class="intro-logomark">
+      <img src="images/logo.png" alt="" width="40" height="40" />
+    </div>
+    <div class="intro-wordmark" aria-hidden="true">
+      <span style="--i:0">F</span><span style="--i:1">L</span><span style="--i:2">O</span><span style="--i:3">R</span><span style="--i:4">A</span><span style="--i:5">L</span><span style="--i:6">Y</span><span style="--i:7">N</span>
+    </div>
+    <p class="intro-tagline">Nail Art Studio</p>
+  </div>
+  <div class="intro-curtain-top"></div>
+  <div class="intro-curtain-bot"></div>
+</div>
+
 <!-- ═══ HEADER ═════════════════════════════════════════════════ -->
 <header class="hdr" id="hdr">
   <div class="hdr-in">
@@ -130,47 +146,88 @@
 
 <!-- ═══ HERO ════════════════════════════════════════════════════ -->
 <section class="hero" id="home" aria-label="Floralyn Nail Art Studio">
-  <div class="hero-content">
 
-    <div class="hero-text">
-      <p class="hero-label anim-1">Nail Art Studio · By Appointment</p>
-      <h1 class="hero-h anim-2">
-        Nails made<br />
-        <em>just for you</em>
-      </h1>
-      <p class="hero-sub anim-3">
-        Gel nails, custom art, and bridal sets — all drawn freehand, 
-        crafted to your exact vision. No templates. No shortcuts.
-      </p>
-      <div class="hero-ctas anim-4">
-        <a href="#booking" class="btn-primary">Book Appointment</a>
-        <a href="#gallery" class="btn-secondary">View Work</a>
-      </div>
-      <div class="hero-stats anim-5" aria-label="Studio credentials">
-        <span><strong>3+</strong> Years</span>
-        <span class="stat-sep" aria-hidden="true">·</span>
-        <span><strong>500+</strong> Clients</span>
-        <span class="stat-sep" aria-hidden="true">·</span>
-        <span><strong>4.9 ★</strong> Rating</span>
-      </div>
+  <!-- Left: text panel -->
+  <div class="hero-text">
+
+    <div class="hero-kicker anim-1">
+      <span class="kicker-dot" aria-hidden="true"></span>
+      Nail Art Studio &nbsp;·&nbsp; By Appointment
     </div>
 
-    <div class="hero-visual" aria-hidden="true">
-      <div class="hv-frame hv-main">
-        <img src="images/sample1.jpg" alt="" loading="eager" />
+    <h1 class="hero-h">
+      <span class="hl anim-2">Nails</span>
+      <span class="hl hl-em anim-3"><em>made for</em></span>
+      <span class="hl hl-outline anim-4">you.</span>
+    </h1>
+
+    <p class="hero-sub anim-5">
+      Gel nails, custom art, and bridal sets — all drawn 
+      freehand to your exact vision.
+    </p>
+
+    <div class="hero-ctas hero-ctas-anim">
+      <a href="#booking" class="btn-primary">Book Appointment</a>
+      <a href="#gallery" class="btn-secondary">View Work</a>
+    </div>
+
+    <div class="hero-stats" aria-label="Studio credentials">
+      <div class="hstat">
+        <strong class="hstat-n" data-count="3">3</strong>
+        <span>Years</span>
       </div>
-      <div class="hv-frame hv-side">
-        <img src="images/sample2.jpg" alt="" loading="eager" />
+      <div class="hstat-line" aria-hidden="true"></div>
+      <div class="hstat">
+        <strong class="hstat-n" data-count="500">500</strong>
+        <span>Clients</span>
       </div>
-      <div class="hv-frame hv-accent">
-        <img src="images/sample3.jpg" alt="" loading="lazy" />
-      </div>
-      <div class="hv-badge">
-        <span class="hv-badge-text">Freehand<br/>Only</span>
+      <div class="hstat-line" aria-hidden="true"></div>
+      <div class="hstat">
+        <strong class="hstat-n">4.9 ★</strong>
+        <span>Rating</span>
       </div>
     </div>
 
   </div>
+
+  <!-- Right: full-bleed photo -->
+  <div class="hero-photo" aria-hidden="true">
+    <img src="images/sample1.jpg" alt="" loading="eager" class="hero-photo-img" />
+    <div class="hero-photo-overlay"></div>
+
+    <!-- Floating mini cards on photo -->
+    <div class="hero-chip hero-chip-1">
+      <span class="chip-dot"></span>
+      Gel Nails · 4 weeks
+    </div>
+    <div class="hero-chip hero-chip-2">
+      <span class="chip-dot chip-dot-2"></span>
+      Freehand Art
+    </div>
+
+    <!-- Rotating badge -->
+    <div class="hero-badge" aria-hidden="true">
+      <svg class="badge-ring" viewBox="0 0 100 100">
+        <defs>
+          <path id="circle-path" d="M 50,50 m -34,0 a 34,34 0 1,1 68,0 a 34,34 0 1,1 -68,0"/>
+        </defs>
+        <text font-size="11" fill="currentColor" font-family="DM Sans, sans-serif" font-weight="600" letter-spacing="3">
+          <textPath href="#circle-path">EST. 2023 · FLORALYN · NAIL ART ·</textPath>
+        </text>
+      </svg>
+      <img src="images/logo.png" alt="" class="badge-center" width="24" height="24" />
+    </div>
+
+  </div>
+
+  <!-- Scroll hint -->
+  <div class="hero-scroll" aria-hidden="true">
+    <div class="hs-track">
+      <div class="hs-thumb"></div>
+    </div>
+    <span class="hs-label">scroll</span>
+  </div>
+
 </section>
 
 <!-- ═══ MARQUEE ══════════════════════════════════════════════════ -->

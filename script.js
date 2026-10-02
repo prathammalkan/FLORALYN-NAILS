@@ -8,6 +8,7 @@ const LOAD_AT     = Date.now();
 const MIN_FILL_MS = 1500;
 
 document.addEventListener('DOMContentLoaded', () => {
+  initIntro();
   initTheme();
   initHeader();
   initDrawer();
@@ -414,5 +415,51 @@ function initForm() {
     } else {
       setStatus('Could not send — please email us at floralyyn7@gmail.com 🌸', 'err');
     }
+  });
+}
+
+/* ── Intro preloader ──────────────────────────────────────────── */
+function initIntro() {
+  const el = document.getElementById('intro');
+  if (!el) return;
+
+  // Skip on repeat visits within same session
+  if (sessionStorage.getItem('flIntro')) {
+    el.style.display = 'none';
+    el.remove();
+    return;
+  }
+
+  // Lock scroll during animation
+  document.body.style.overflow = 'hidden';
+
+  const SHOW_MS = 1750; // display time
+  const EXIT_MS = 750;  // curtain exit duration
+
+  setTimeout(() => {
+    el.classList.add('intro-out');
+    setTimeout(() => {
+      el.remove();
+      document.body.style.overflow = '';
+      sessionStorage.setItem('flIntro', '1');
+      initCountUp();
+    }, EXIT_MS);
+  }, SHOW_MS);
+}
+
+/* ── Count-up animation for hero stats ───────────────────────── */
+function initCountUp() {
+  document.querySelectorAll('.hstat-n[data-count]').forEach(el => {
+    const target = parseInt(el.dataset.count, 10);
+    const dur    = 1400;
+    const step   = 16;
+    const steps  = Math.ceil(dur / step);
+    const inc    = target / steps;
+    let   cur    = 0;
+    const t = setInterval(() => {
+      cur = Math.min(cur + inc, target);
+      el.textContent = Math.round(cur) + '+';
+      if (cur >= target) clearInterval(t);
+    }, step);
   });
 }
