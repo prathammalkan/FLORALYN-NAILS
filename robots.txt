@@ -3,5 +3,10 @@ Allow: /
 Disallow: /admin/
 Disallow: /api/
 
-# Sitemap location (update with your actual Vercel domain)
-Sitemap: https://floralyn.vercel.app/sitemap.xml
+# Block common vulnerability scanners
+Disallow: /wp-admin/
+Disallow: /wp-login.php
+Disallow: /.env
+Disallow: /.git/
+
+Sitemap: https://floralyn-nails.vercel.app/sitemap.xml
