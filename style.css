@@ -1864,3 +1864,230 @@ body.dark #intro { background: #120A1C; }
 body.dark .intro-bg { background: #120A1C; }
 body.dark .intro-curtain-top,
 body.dark .intro-curtain-bot { background: #120A1C; }
+
+
+/* ════════════════════════════════════════════════════════════════
+   GIRLY / FEMININE REDESIGN — Romantic Botanical Layer
+   Adds warmth, personality, and feminine energy on top of
+   the editorial base without changing brand colors.
+   ════════════════════════════════════════════════════════════════ */
+
+/* ── Extended design tokens ─────────────────────────────────── */
+:root {
+  --rose:       #F4B8D0;
+  --rose-dk:    #D4688E;
+  --rose-lt:    #FDEEF5;
+  --blush:      #FFF0F5;
+  --gold:       #C4965A;
+  --gold-lt:    #FBF0E0;
+  --lavender:   #F0E8FF;
+  --mint:       #E8F8F0;
+}
+
+/* ── Global body — warmer background ────────────────────────── */
+body { background: #FDF8FB; }
+
+/* ── Decorative sparkle (reusable CSS class) ─────────────────── */
+.sparkle::before,
+.sparkle::after {
+  content: '✦';
+  position: absolute;
+  color: var(--rose);
+  font-size: 10px;
+  animation: sparklePulse 3s ease-in-out infinite;
+}
+@keyframes sparklePulse {
+  0%,100% { opacity: .4; transform: scale(1) rotate(0deg); }
+  50%      { opacity: 1;  transform: scale(1.3) rotate(20deg); }
+}
+
+/* ── Section label — more feminine ──────────────────────────── */
+.sec-label {
+  color: var(--rose-dk);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.sec-label::before { content: '✦'; font-size: 9px; }
+
+/* ── Hero — rose gradient wash ───────────────────────────────── */
+.hero::before {
+  background:
+    radial-gradient(ellipse 70% 50% at 0% 100%, rgba(244,184,208,.18) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 40% at 100% 0%, rgba(164,125,196,.12) 0%, transparent 55%);
+}
+.hero-kicker { color: var(--rose-dk); }
+.kicker-dot  { background: var(--rose-dk); }
+.hl-em em    { color: var(--rose-dk); }
+.hl-outline  { -webkit-text-stroke-color: var(--text); }
+
+/* ── Marquee — rose accent ───────────────────────────────────── */
+.marquee-wrap { background: var(--blush); border-color: rgba(212,104,142,.15); }
+.marquee-dot  { color: var(--rose-dk) !important; }
+
+/* ── Services — alternating feminine accents ─────────────────── */
+.svc-row:nth-child(1) .svc-num { color: rgba(212,104,142,.25); }
+.svc-row:nth-child(2) .svc-num { color: rgba(164,125,196,.25); }
+.svc-row:nth-child(3) .svc-num { color: rgba(196,150,90,.25); }
+.svc-row:nth-child(4) .svc-num { color: rgba(212,104,142,.25); }
+
+.svc-row:nth-child(3) { background: linear-gradient(to right, var(--blush), transparent); }
+.svc-row:nth-child(3):hover { background: linear-gradient(to right, #FDDDE9, #FFF0F5); }
+.svc-tag { background: linear-gradient(135deg, var(--rose-lt), #FFE4EF); color: var(--rose-dk); }
+
+.svc-price { color: var(--rose-dk); }
+.svc-dur   { border-color: rgba(212,104,142,.2); color: var(--rose-dk); }
+
+/* ── Gallery — rose hover glow ───────────────────────────────── */
+.g-item:hover { box-shadow: 0 4px 24px rgba(212,104,142,.22); }
+.g-drive { background: linear-gradient(135deg, var(--rose-lt) 0%, var(--lavender) 100%) !important; border-color: rgba(212,104,142,.3); }
+.g-drive-inner { color: var(--rose-dk); }
+.g-drive-arrow { color: var(--rose-dk); }
+
+/* ── Why section — rose numbers ──────────────────────────────── */
+.why-num { color: rgba(212,104,142,.2); }
+.why-body h3::after {
+  content: '';
+  display: block;
+  width: 32px; height: 2px;
+  background: linear-gradient(to right, var(--rose), transparent);
+  margin-top: 8px;
+  border-radius: 2px;
+}
+
+/* ── Testimonials — rose accents ─────────────────────────────── */
+.testi-card { position: relative; }
+.testi-card::before {
+  content: '\201C';
+  position: absolute;
+  top: 16px; left: 20px;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 72px;
+  line-height: 1;
+  color: var(--rose-lt);
+  font-weight: 300;
+  pointer-events: none;
+}
+.testi-rating { color: var(--rose-dk); letter-spacing: 4px; }
+.testi-card footer strong { color: var(--rose-dk); }
+
+/* ── Process — rose numbers ──────────────────────────────────── */
+.proc-n { color: rgba(212,104,142,.2); }
+
+/* ── FAQ — rose active state ─────────────────────────────────── */
+.faq-item[open] .faq-q { color: var(--rose-dk); }
+.faq-item[open] .faq-icon { color: var(--rose-dk); }
+
+/* ── Booking section — blush tint ─────────────────────────────── */
+.booking-sec { background: var(--blush); }
+.booking-contact a { color: var(--muted); }
+.booking-contact a:hover { color: var(--rose-dk); }
+
+/* ── Form — rose focus states ────────────────────────────────── */
+input:focus, select:focus, textarea:focus {
+  border-color: var(--rose-dk);
+  box-shadow: 0 0 0 3px rgba(212,104,142,.1);
+}
+.sp-opt input:checked + .sp-card {
+  border-color: var(--rose-dk);
+  background: rgba(212,104,142,.06);
+}
+.cdp-day.cdp-sel { background: var(--rose-dk); }
+.ctp-slot.ctp-sel { background: var(--rose-dk); border-color: var(--rose-dk); }
+.btn-solid { background: var(--rose-dk); border-color: var(--rose-dk); }
+.btn-solid:hover { background: #B85080; border-color: #B85080; }
+.btn-primary { background: var(--rose-dk); border-color: var(--rose-dk); }
+.btn-primary:hover { background: #B85080; border-color: #B85080; }
+.btn-book { background: var(--rose-dk); }
+.btn-book:hover { background: #B85080; }
+
+/* ── Float CTA — rose ────────────────────────────────────────── */
+.float-btn { background: var(--rose-dk); }
+.float-btn:hover { background: #B85080; }
+
+/* ── Step dots — rose ────────────────────────────────────────── */
+.step-dot.act { background: var(--rose-dk); }
+
+/* ── Success screen ──────────────────────────────────────────── */
+.f-success h3 { color: var(--rose-dk); }
+
+/* ── Footer — warm tint on brand ────────────────────────────── */
+.ftr { background: linear-gradient(170deg, #2D0F1E 0%, #4A1528 40%, #3D1130 100%); }
+
+/* ── Why section background ──────────────────────────────────── */
+.why-sec { background: var(--blush); border-color: rgba(212,104,142,.12); }
+.why-item { border-color: rgba(212,104,142,.12); }
+
+/* ── Testimonials section background ────────────────────────── */
+.testi-sec { background: var(--lavender); }
+.testi-grid { background: rgba(212,104,142,.08); border-color: rgba(212,104,142,.12); }
+.testi-card { background: rgba(255,255,255,.95); }
+
+/* ── Process section background ─────────────────────────────── */
+.process-sec { background: #FFF8FC; }
+
+/* ── Hero chips — rose ───────────────────────────────────────── */
+.chip-dot   { background: var(--rose-dk); }
+.chip-dot-2 { background: #C4965A; }
+
+/* ── Pulsing dot — rose ──────────────────────────────────────── */
+.kicker-dot { background: var(--rose-dk); }
+
+/* ── Marquee wrap — softer pink ──────────────────────────────── */
+.marquee-track span { color: var(--rose-dk); font-style: italic; }
+.marquee-dot { color: rgba(212,104,142,.5) !important; }
+
+/* ── Section headings — italic em — more romantic ────────────── */
+.sec-heading em { color: var(--rose-dk); }
+
+/* ── Booking note ────────────────────────────────────────────── */
+.booking-note { color: var(--rose-dk); }
+
+/* ── Hero stats — rose borders ───────────────────────────────── */
+.hstat-line { background: rgba(212,104,142,.2); }
+
+/* ── Hero badge ──────────────────────────────────────────────── */
+.badge-ring { color: rgba(255,255,255,.9); }
+
+/* ── Footer location mention ─────────────────────────────────── */
+.ftr-brand p { font-size: 13px; }
+
+/* ═══ GIRLY DARK MODE OVERRIDES ═════════════════════════════════ */
+body.dark {
+  background: #1A0A14;
+  --blush: rgba(212,104,142,.07);
+  --lavender: rgba(164,125,196,.08);
+  --rose-lt: rgba(212,104,142,.12);
+}
+body.dark .booking-sec { background: rgba(212,104,142,.07); }
+body.dark .why-sec { background: rgba(212,104,142,.05); border-color: rgba(212,104,142,.1); }
+body.dark .testi-sec { background: rgba(164,125,196,.07); }
+body.dark .testi-grid { background: rgba(212,104,142,.06); border-color: rgba(212,104,142,.1); }
+body.dark .testi-card { background: rgba(30,12,28,.9); }
+body.dark .testi-card::before { color: rgba(212,104,142,.15); }
+body.dark .process-sec { background: rgba(212,104,142,.04); }
+body.dark .testi-rating { color: var(--rose); }
+body.dark .testi-card footer strong { color: var(--rose); }
+body.dark .faq-item[open] .faq-q { color: var(--rose); }
+body.dark .svc-price { color: var(--rose); }
+body.dark .svc-dur { border-color: rgba(212,104,142,.25); color: var(--rose); }
+body.dark .svc-row:nth-child(3) { background: rgba(212,104,142,.06); }
+body.dark .sec-label { color: var(--rose); }
+body.dark .sec-label::before { color: var(--rose); }
+body.dark .booking-note { color: var(--rose); }
+body.dark .marquee-wrap { background: rgba(212,104,142,.05); border-color: rgba(212,104,142,.1); }
+body.dark .g-drive { background: linear-gradient(135deg, rgba(212,104,142,.12) 0%, rgba(164,125,196,.12) 100%) !important; }
+body.dark .why-body h3::after { background: linear-gradient(to right, rgba(212,104,142,.4), transparent); }
+
+/* ════════════════════════════════════════════════════════════════
+   LOCATION FOOTER SNIPPET (Jetpur, Gujarat)
+   ════════════════════════════════════════════════════════════════ */
+.ftr-location {
+  font-size: 12px;
+  color: rgba(255,255,255,.38);
+  margin-top: 6px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.ftr-location::before { content: '📍'; font-size: 11px; }
