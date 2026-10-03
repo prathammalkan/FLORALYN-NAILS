@@ -1010,3 +1010,67 @@ input:checked + .toggle-slider::after { transform: translateX(20px); }
 .gallery-card-actions .btn-del:hover { background: #fecaca; }
 .vis-toggle { display: flex; align-items: center; gap: 6px; font-size: 11px; margin-top: 6px; }
 .vis-toggle input { accent-color: #a47dc4; }
+
+/* ─── PROMOTIONS TAB ────────────────────────────────────────── */
+.promo-toggle-row { display: flex; align-items: center; gap: 12px; }
+.promo-toggle-label {
+  display: flex; align-items: center; gap: 10px;
+  font-size: 14px; font-weight: 500; cursor: pointer; user-select: none;
+}
+.promo-toggle-label input { display: none; }
+.promo-toggle-track {
+  width: 44px; height: 24px;
+  background: #e5e7eb; border-radius: 50px;
+  position: relative; transition: background .2s;
+  flex-shrink: 0;
+}
+.promo-toggle-thumb {
+  position: absolute; top: 3px; left: 3px;
+  width: 18px; height: 18px;
+  background: #fff; border-radius: 50%;
+  transition: transform .2s;
+  box-shadow: 0 1px 4px rgba(0,0,0,.2);
+}
+.promo-toggle-label input:checked + .promo-toggle-track { background: #D4688E; }
+.promo-toggle-label input:checked + .promo-toggle-track .promo-toggle-thumb { transform: translateX(20px); }
+
+.promo-preview {
+  margin-top: 16px; border-radius: 10px;
+  overflow: hidden; border: 1px solid #e5e7eb;
+}
+.promo-preview-label {
+  font-size: 11px; font-weight: 700; letter-spacing: .1em;
+  text-transform: uppercase; color: #9ca3af;
+  padding: 6px 12px; background: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
+}
+.promo-preview-bar {
+  padding: 10px 16px; font-size: 13px; font-weight: 600;
+  text-align: center; background: #D4688E; color: #fff;
+  transition: background .2s, color .2s;
+}
+
+/* Service display quick-editor */
+.svc-display-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px; align-items: end;
+  padding: 12px 0;
+  border-bottom: 1px solid #f3f4f6;
+}
+.svc-display-row:last-child { border-bottom: none; }
+.svc-display-name {
+  font-size: 13px; font-weight: 600; color: #374151;
+  margin-bottom: 6px; grid-column: 1 / -1;
+}
+.svc-display-field label {
+  font-size: 11px; font-weight: 600; color: #9ca3af;
+  text-transform: uppercase; letter-spacing: .08em;
+  display: block; margin-bottom: 4px;
+}
+.svc-display-field input {
+  width: 100%; padding: 8px 10px;
+  border: 1px solid #e5e7eb; border-radius: 8px;
+  font-size: 13px; background: #fff;
+}
+.svc-display-field input:focus { outline: none; border-color: #D4688E; box-shadow: 0 0 0 3px rgba(212,104,142,.1); }

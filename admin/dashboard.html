@@ -39,10 +39,16 @@
           <span class="nav-icon" aria-hidden="true">🖼️</span> Gallery
         </button>
         <button class="nav-item" data-view="services">
-          <span class="nav-icon" aria-hidden="true">💅</span> Services
+          <span class="nav-icon" aria-hidden="true">💅</span> Services &amp; Prices
+        </button>
+        <button class="nav-item" data-view="promotions">
+          <span class="nav-icon" aria-hidden="true">🎀</span> Promotions
         </button>
         <button class="nav-item" data-view="settings">
           <span class="nav-icon" aria-hidden="true">⚙️</span> Settings
+        </button>
+        <button class="nav-item" data-view="preview">
+          <span class="nav-icon" aria-hidden="true">👁️</span> Preview Site
         </button>
         <button class="nav-item" data-view="audit">
           <span class="nav-icon" aria-hidden="true">📝</span> Audit Log
@@ -204,10 +210,72 @@
       <!-- ═══════════════════════════════════════════════════════ -->
       <section class="view" id="view-services" style="display:none">
         <div class="page-header">
-          <h2 class="page-title">Services</h2>
+          <h2 class="page-title">Services &amp; Prices</h2>
           <button class="btn-primary" id="add-service-btn">+ Add Service</button>
         </div>
+        <p style="font-size:13px;color:#888;margin-bottom:16px">Enable/disable services and update their display info (price, duration) shown on the website.</p>
         <div id="services-list" class="services-list"></div>
+      </section>
+
+      <!-- ═══════════════════════════════════════════════════════ -->
+      <!--  PROMOTIONS VIEW                                        -->
+      <!-- ═══════════════════════════════════════════════════════ -->
+      <section class="view" id="view-promotions" style="display:none">
+        <div class="page-header">
+          <h2 class="page-title">Promotions &amp; Offers</h2>
+          <button class="btn-primary" id="promo-save-btn">Save Changes</button>
+        </div>
+
+        <!-- Offer Banner -->
+        <div class="settings-card">
+          <h3 class="settings-card-title">🎀 Offer Banner (Top of Site)</h3>
+          <p style="font-size:13px;color:#888;margin-bottom:14px">When enabled, a scrolling banner appears at the very top of your website for all visitors.</p>
+
+          <div class="promo-toggle-row">
+            <label class="promo-toggle-label" for="banner-enabled">
+              <input type="checkbox" id="banner-enabled" />
+              <span class="promo-toggle-track"><span class="promo-toggle-thumb"></span></span>
+              Show banner on website
+            </label>
+          </div>
+
+          <div class="settings-row" style="margin-top:14px">
+            <div class="settings-field" style="flex:2">
+              <label for="banner-text">Banner Text</label>
+              <input type="text" id="banner-text" maxlength="150" placeholder="🌸 Special offer this month — book now!" />
+            </div>
+          </div>
+          <div class="settings-row">
+            <div class="settings-field">
+              <label for="banner-bg">Background Colour</label>
+              <div style="display:flex;gap:8px;align-items:center">
+                <input type="color" id="banner-bg" value="#D4688E" style="width:48px;height:38px;border:none;border-radius:8px;cursor:pointer;padding:2px" />
+                <input type="text" id="banner-bg-hex" value="#D4688E" maxlength="7" style="flex:1;font-family:monospace" />
+              </div>
+            </div>
+            <div class="settings-field">
+              <label for="banner-color">Text Colour</label>
+              <div style="display:flex;gap:8px;align-items:center">
+                <input type="color" id="banner-color" value="#ffffff" style="width:48px;height:38px;border:none;border-radius:8px;cursor:pointer;padding:2px" />
+                <input type="text" id="banner-color-hex" value="#ffffff" maxlength="7" style="flex:1;font-family:monospace" />
+              </div>
+            </div>
+          </div>
+
+          <div class="promo-preview" id="banner-preview">
+            <div class="promo-preview-label">Preview</div>
+            <div class="promo-preview-bar" id="banner-preview-bar">🌸 Your banner text will appear here</div>
+          </div>
+        </div>
+
+        <!-- Service Price Quick-Edit -->
+        <div class="settings-card">
+          <h3 class="settings-card-title">💅 Service Display (Price &amp; Duration)</h3>
+          <p style="font-size:13px;color:#888;margin-bottom:14px">Update the prices and durations shown on the website. Leave blank to use the static defaults.</p>
+          <div id="service-display-editor"></div>
+        </div>
+
+        <span class="settings-status" id="promo-status" role="status" aria-live="polite"></span>
       </section>
 
       <!-- ═══════════════════════════════════════════════════════ -->

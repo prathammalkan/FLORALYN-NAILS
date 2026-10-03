@@ -1122,3 +1122,180 @@ document.addEventListener('DOMContentLoaded', () => {
     admin.init().catch(err => console.error('[FloralynAdmin] Init error:', err));
   }
 });
+
+
+/* ═══════════════════════════════════════════════════════════════
+   PROMOTIONS MODULE — banner + service display price editor
+   Appended to dashboard.js (FloralynAdmin class methods added
+   via prototype after class definition)
+   ═══════════════════════════════════════════════════════════════ */
+
+// Patch loadView to include promotions
+(function patchLoadView() {
+  const _orig = FloralynAdmin.prototype.loadView;
+  FloralynAdmin.prototype.loadView = async function(view) {
+    await _orig.call(this, view);
+    if (view === 'promotions') await this.loadPromotions();
+  };
+
+  // Update titles map
+  const _origCheck = FloralynAdmin.prototype.checkAuth;
+  FloralynAdmin.prototype.checkAuth = async function() {
+    await _origCheck.call(this);
+  };
+})();
+
+// Fix titles map to include promotions
+FloralynAdmin.prototype._viewTitles = {
+  dashboard: 'Dashboard', appointments: 'Appointments',
+  gallery: 'Gallery', services: 'Services & Prices',
+  promotions: 'Promotions', settings: 'Settings',
+  preview: 'Preview', audit: 'Audit Log',
+};
+
+/* ── loadPromotions ─────────────────────────────────────────── */
+FloralynAdmin.prototype.loadPromotions = async function() {
+  const SERVICES = [
+    { key: 'Simple Manicure',           label: 'Simple Manicure' },
+    { key: 'Gel Nails',                 label: 'Gel Nails' },
+    { key: 'Custom Design',             label: 'Custom Nail Art' },
+    { key: 'Bridal / Special Occasion', label: 'Bridal & Occasions' },
+  ];
+
+  // ── Load current banner settings ──────────────────────────
+  try {
+    const { data } = await this.db.from('settings').select('key, value')
+      .in('key', ['banner', 'services_display']);
+
+    const rows = {};
+    (data || []).forEach(r => { rows[r.key] = r.value; });
+
+    const b = rows.banner || {};
+    const sd = rows.services_display || {};
+
+    // Populate banner fields
+    const setVal = (id, val) => { const el = document.getElementById(id); if (el && val !== undefined) el.value = val; };
+    const setChk = (id, val) => { const el = document.getElementById(id); if (el) el.checked = !!val; };
+
+    setChk('banner-enabled', b.enabled);
+    setVal('banner-text', b.text || '');
+    setVal('banner-bg',   b.bg   || '#D4688E');
+    setVal('banner-bg-hex', b.bg || '#D4688E');
+    setVal('banner-color', b.textColor || '#ffffff');
+    setVal('banner-color-hex', b.textColor || '#ffffff');
+
+    // Populate service display editor
+    const editor = document.getElementById('service-display-editor');
+    if (editor) {
+      editor.innerHTML = SERVICES.map(s => {
+        const info = sd[s.key] || {};
+        return `
+          <div class="svc-display-row" data-svc-key="${this.esc(s.key)}">
+            <div class="svc-display-name">${this.esc(s.label)}</div>
+            <div class="svc-display-field">
+              <label>Price (e.g. "from ₹700")</label>
+              <input type="text" class="svc-price-input" maxlength="40" placeholder="from ₹..." value="${this.esc(info.price || '')}" />
+            </div>
+            <div class="svc-display-field">
+              <label>Duration (e.g. "~60 min")</label>
+              <input type="text" class="svc-dur-input" maxlength="20" placeholder="~XX min" value="${this.esc(info.duration || '')}" />
+            </div>
+            <div class="svc-display-field">
+              <label>Tag (e.g. "Most Booked")</label>
+              <input type="text" class="svc-tag-input" maxlength="30" placeholder="Optional badge" value="${this.esc(info.tag || '')}" />
+            </div>
+          </div>`;
+      }).join('');
+    }
+
+    // Live preview sync
+    this._bindBannerPreview();
+
+  } catch(e) {
+    this.showToast('Failed to load promotions settings', 'error');
+  }
+
+  // Bind save button (once)
+  const saveBtn = document.getElementById('promo-save-btn');
+  if (saveBtn && !saveBtn._bound) {
+    saveBtn._bound = true;
+    saveBtn.addEventListener('click', () => this.savePromotions());
+  }
+};
+
+/* ── Live banner preview ─────────────────────────────────────── */
+FloralynAdmin.prototype._bindBannerPreview = function() {
+  const previewBar = document.getElementById('banner-preview-bar');
+  const textInput  = document.getElementById('banner-text');
+  const bgInput    = document.getElementById('banner-bg');
+  const bgHex      = document.getElementById('banner-bg-hex');
+  const colorInput = document.getElementById('banner-color');
+  const colorHex   = document.getElementById('banner-color-hex');
+
+  const sync = () => {
+    if (!previewBar) return;
+    previewBar.textContent = textInput?.value || '🌸 Your banner text will appear here';
+    previewBar.style.background = bgInput?.value || '#D4688E';
+    previewBar.style.color = colorInput?.value || '#ffffff';
+  };
+
+  // Sync color pickers ↔ hex inputs
+  bgInput?.addEventListener('input', () => { if (bgHex) bgHex.value = bgInput.value; sync(); });
+  bgHex?.addEventListener('input', () => { if (/^#[0-9a-f]{6}$/i.test(bgHex.value)) { if (bgInput) bgInput.value = bgHex.value; sync(); } });
+  colorInput?.addEventListener('input', () => { if (colorHex) colorHex.value = colorInput.value; sync(); });
+  colorHex?.addEventListener('input', () => { if (/^#[0-9a-f]{6}$/i.test(colorHex.value)) { if (colorInput) colorInput.value = colorHex.value; sync(); } });
+  textInput?.addEventListener('input', sync);
+  sync();
+};
+
+/* ── savePromotions ─────────────────────────────────────────── */
+FloralynAdmin.prototype.savePromotions = async function() {
+  const btn    = document.getElementById('promo-save-btn');
+  const status = document.getElementById('promo-status');
+  if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
+  if (status) status.textContent = '';
+
+  try {
+    // Collect banner data
+    const banner = {
+      enabled:   document.getElementById('banner-enabled')?.checked || false,
+      text:      (document.getElementById('banner-text')?.value || '').trim().slice(0,150),
+      bg:        document.getElementById('banner-bg')?.value || '#D4688E',
+      textColor: document.getElementById('banner-color')?.value || '#ffffff',
+    };
+
+    // Collect service display data
+    const servicesDisplay = {};
+    document.querySelectorAll('#service-display-editor [data-svc-key]').forEach(row => {
+      const key  = row.dataset.svcKey;
+      const price = row.querySelector('.svc-price-input')?.value.trim() || '';
+      const dur   = row.querySelector('.svc-dur-input')?.value.trim() || '';
+      const tag   = row.querySelector('.svc-tag-input')?.value.trim() || '';
+      if (price || dur || tag) servicesDisplay[key] = { price, duration: dur, tag };
+    });
+
+    // Save to Supabase settings table
+    const { error } = await this.db.from('settings').upsert([
+      { key: 'banner',           value: banner },
+      { key: 'services_display', value: servicesDisplay },
+    ], { onConflict: 'key' });
+
+    if (error) throw error;
+
+    // Audit log
+    await this.db.from('audit_log').insert({
+      action: 'PROMOTIONS_SAVED',
+      entity_type: 'settings',
+      entity_id: 'banner',
+      details: { banner_enabled: banner.enabled, text_length: banner.text.length },
+    }).catch(() => {});
+
+    this.showToast('✅ Promotions saved! Changes will appear on your website within 1 minute.', 'success');
+    if (status) { status.textContent = '✅ Saved!'; setTimeout(() => { status.textContent = ''; }, 4000); }
+
+  } catch(e) {
+    this.showToast('Failed to save: ' + e.message, 'error');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'Save Changes'; }
+  }
+};

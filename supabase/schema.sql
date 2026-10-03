@@ -225,3 +225,25 @@ INSERT INTO settings (key, value) VALUES
     {"group":"Evening",   "time":"18:30", "label":"6:30 PM"}
   ]')
 ON CONFLICT (key) DO NOTHING;
+
+-- ================================================================
+-- SEED: Banner + Services Display settings
+-- ================================================================
+INSERT INTO settings (key, value) VALUES
+  ('banner', '{
+    "enabled": false,
+    "text": "🌸 Book your next appointment — limited slots available!",
+    "bg": "#D4688E",
+    "textColor": "#ffffff"
+  }'),
+  ('services_display', '{
+    "Simple Manicure":           {"price": "from ₹300", "duration": "~45 min", "tag": ""},
+    "Gel Nails":                 {"price": "from ₹700", "duration": "~60 min", "tag": ""},
+    "Custom Design":             {"price": "from ₹1,200", "duration": "~90 min", "tag": "Most Booked"},
+    "Bridal / Special Occasion": {"price": "from ₹2,000", "duration": "~2 hrs", "tag": ""}
+  }'),
+  ('hero', '{
+    "kicker": "Jetpur'\''s Favourite Nail Studio · Book Your Slot",
+    "subtext": "Gel nails, custom art & dreamy bridal sets — all handcrafted just for you. Serving Jetpur, Gujarat and nearby."
+  }')
+ON CONFLICT (key) DO NOTHING;

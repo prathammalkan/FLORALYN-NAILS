@@ -2091,3 +2091,47 @@ body.dark .why-body h3::after { background: linear-gradient(to right, rgba(212,1
   gap: 5px;
 }
 .ftr-location::before { content: '📍'; font-size: 11px; }
+
+/* ════════════════════════════════════════════════════════════════
+   OFFER BANNER (admin-controlled top bar)
+   ════════════════════════════════════════════════════════════════ */
+.offer-banner {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 300;
+  height: 38px;
+  background: var(--rose-dk, #D4688E);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+}
+.ob-track {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  white-space: nowrap;
+  animation: obScroll 22s linear infinite;
+  padding-left: 100vw;
+}
+@keyframes obScroll {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+.ob-sep { opacity: .55; font-size: 10px; }
+@media (prefers-reduced-motion: reduce) {
+  .ob-track { animation: none; padding-left: 12px; }
+}
+
+/* When banner is active, push everything down */
+body.has-banner .hdr { top: 38px; }
+body.has-banner .hero { padding-top: calc(var(--hh, 64px) + 38px + 52px); }
+body.has-banner #intro { top: 38px; }
+@media (min-width: 900px) {
+  body.has-banner .hero-text {
+    padding-top: calc(var(--hh, 64px) + 38px + 60px);
+  }
+}

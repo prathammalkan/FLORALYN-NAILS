@@ -9,6 +9,7 @@ const MIN_FILL_MS = 1500;
 
 document.addEventListener('DOMContentLoaded', () => {
   initIntro();
+  initSiteSettings(); // fetch + apply dynamic admin settings
   initTheme();
   initHeader();
   initDrawer();
@@ -462,4 +463,67 @@ function initCountUp() {
       if (cur >= target) clearInterval(t);
     }, step);
   });
+}
+
+/* ── Site Settings (dynamic, admin-controlled) ───────────────── */
+async function initSiteSettings() {
+  try {
+    const res = await fetch('/api/site-settings', { cache: 'no-store' });
+    if (!res.ok) return;
+    const { settings } = await res.json();
+    if (!settings) return;
+
+    // ── Apply offer banner ──────────────────────────────────────
+    const b = settings.banner;
+    if (b && b.enabled && b.text) {
+      const wrap = document.getElementById('offer-banner');
+      const t1   = document.getElementById('ob-text-1');
+      const t2   = document.getElementById('ob-text-2');
+      const t3   = document.getElementById('ob-text-3');
+      if (wrap) {
+        // Same text 3× so marquee appears seamless
+        const txt = String(b.text).slice(0, 200);
+        if (t1) t1.textContent = txt;
+        if (t2) t2.textContent = txt;
+        if (t3) t3.textContent = txt;
+        if (b.bg)        wrap.style.background = String(b.bg).slice(0,20);
+        if (b.textColor) wrap.style.color      = String(b.textColor).slice(0,20);
+        wrap.style.display = '';
+        document.body.classList.add('has-banner');
+      }
+    }
+
+    // ── Apply service display overrides (price, duration, tag) ──
+    const sd = settings.services_display;
+    if (sd && typeof sd === 'object') {
+      document.querySelectorAll('[data-service]').forEach(row => {
+        const key  = row.dataset.service;
+        const info = sd[key];
+        if (!info) return;
+        const priceEl = row.querySelector('.svc-price');
+        const durEl   = row.querySelector('.svc-dur');
+        const tagEl   = row.querySelector('.svc-tag');
+        const descEl  = row.querySelector('.svc-desc');
+        if (priceEl && info.price) priceEl.textContent = String(info.price).slice(0,40);
+        if (durEl   && info.duration) durEl.textContent = String(info.duration).slice(0,20);
+        if (tagEl   && info.tag !== undefined) tagEl.textContent = String(info.tag).slice(0,30);
+        if (descEl  && info.description) descEl.textContent = String(info.description).slice(0,300);
+      });
+    }
+
+    // ── Apply hero overrides ────────────────────────────────────
+    const h = settings.hero;
+    if (h && typeof h === 'object') {
+      const subEl    = document.querySelector('.hero-sub');
+      const kickerEl = document.querySelector('.hero-kicker');
+      if (subEl    && h.subtext) subEl.textContent = String(h.subtext).slice(0,200);
+      if (kickerEl && h.kicker)  {
+        // preserve the pulsing dot, only update text
+        const dot = kickerEl.querySelector('.kicker-dot');
+        kickerEl.textContent = ' ' + String(h.kicker).slice(0,100);
+        if (dot) kickerEl.prepend(dot);
+      }
+    }
+
+  } catch (_) { /* fail silently — static HTML is fallback */ }
 }
