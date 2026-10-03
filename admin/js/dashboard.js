@@ -1,20 +1,48 @@
-﻿// admin/js/dashboard.js
-// Floralyn Admin Dashboard â€” Complete SPA Logic
+// admin/js/dashboard.js
+// Floralyn Admin Dashboard — Complete SPA Logic
 // Uses Supabase JS v2 for auth, database, and storage
 
 'use strict';
 
 // ================================================================
-// âš™ï¸ CONFIGURATION
-// Replace these with your actual Supabase project credentials.
-// Get them from: https://supabase.com/dashboard â†’ your project â†’ Settings â†’ API
-// The ANON KEY is safe for browser use â€” RLS enforces all access control.
-// NEVER use the service_role key here.
+// ⚙️ CONFIGURATION
 // ================================================================
 window.FloralynConfig = {
   SUPABASE_URL:      'https://znycuzuveqhybqgevjvj.supabase.co',
   SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpueWN1enV2ZXFoeWJxZ2V2anZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA2MTcyMTQsImV4cCI6MjEwNjE5MzIxNH0.cPYdpp6peTFX4e88K4yb8f1tbaV96ifqoy7TrCyEAxQ',
 };
+
+// ================================================================
+// IMAGE COMPRESSION
+// Client-side compression before upload — reduces storage costs
+// and speeds up page loads on the public gallery.
+// ================================================================
+async function compressImage(file, maxPx = 1400, quality = 0.82) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = reject;
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onerror = reject;
+      img.onload = () => {
+        const ratio  = Math.min(maxPx / Math.max(img.width, img.height), 1);
+        const canvas = document.createElement('canvas');
+        canvas.width  = Math.round(img.width  * ratio);
+        canvas.height = Math.round(img.height * ratio);
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        canvas.toBlob(
+          blob => blob
+            ? resolve(new File([blob], file.name.replace(/\.[^.]+$/, '.jpg'), { type: 'image/jpeg' }))
+            : reject(new Error('Compression failed')),
+          'image/jpeg', quality
+        );
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
 
 // ================================================================
 // ADMIN APP CLASS
@@ -25,31 +53,21 @@ class FloralynAdmin {
     this.currentView = 'dashboard';
     this.currentAppt = null;
     this._confirmResolve = null;
+    this._previewBound   = false;
   }
 
-  // â”€â”€ Initialization â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Initialization ─────────────────────────────────────────────
   async init() {
     const { SUPABASE_URL, SUPABASE_ANON_KEY } = window.FloralynConfig;
-
-    if (!SUPABASE_URL || SUPABASE_URL === 'YOUR_SUPABASE_URL') {
-      // Config not set â€” handled by login page
-      return;
-    }
-
+    if (!SUPABASE_URL || SUPABASE_URL === 'YOUR_SUPABASE_URL') return;
     this.db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
     await this.checkAuth();
   }
 
   async checkAuth() {
     const { data: { session } } = await this.db.auth.getSession();
+    if (!session) { window.location.href = '/admin/'; return; }
 
-    if (!session) {
-      window.location.href = '/admin/';
-      return;
-    }
-
-    // Auth confirmed â€” show app
     document.getElementById('auth-loading').style.display = 'none';
     document.getElementById('app').style.display = 'flex';
 
@@ -63,20 +81,16 @@ class FloralynAdmin {
 
     await this.loadView('dashboard');
 
-    // Auto-refresh auth session silently
     this.db.auth.onAuthStateChange((event) => {
-      if (event === 'SIGNED_OUT') {
-        window.location.href = '/admin/';
-      }
+      if (event === 'SIGNED_OUT') window.location.href = '/admin/';
     });
   }
 
-  // â”€â”€ Navigation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Navigation ──────────────────────────────────────────────────
   bindNavigation() {
     document.querySelectorAll('[data-view]').forEach(btn => {
       btn.addEventListener('click', () => {
-        const view = btn.dataset.view;
-        this.loadView(view);
+        this.loadView(btn.dataset.view);
         this.closeSidebar();
       });
     });
@@ -85,19 +99,16 @@ class FloralynAdmin {
   async loadView(view) {
     this.currentView = view;
 
-    // Update nav active state
     document.querySelectorAll('.nav-item').forEach(btn => {
       const isActive = btn.dataset.view === view;
       btn.classList.toggle('active', isActive);
       btn.setAttribute('aria-current', isActive ? 'page' : 'false');
     });
 
-    // Show/hide views
     document.querySelectorAll('.view').forEach(v => {
       v.style.display = v.id === `view-${view}` ? '' : 'none';
     });
 
-    // Update mobile header title
     const titles = {
       dashboard:    'Dashboard',
       appointments: 'Appointments',
@@ -105,11 +116,11 @@ class FloralynAdmin {
       services:     'Services',
       settings:     'Settings',
       audit:        'Audit Log',
+      preview:      'Preview',
     };
     const mobileTitle = document.getElementById('mobile-title');
     if (mobileTitle) mobileTitle.textContent = titles[view] || view;
 
-    // Load data for the view
     const loaders = {
       dashboard:    () => this.loadDashboard(),
       appointments: () => this.loadAppointments(),
@@ -117,16 +128,15 @@ class FloralynAdmin {
       services:     () => this.loadServices(),
       settings:     () => this.loadSettings(),
       audit:        () => this.loadAuditLog(),
+      preview:      () => this.loadPreview(),
     };
-
     if (loaders[view]) await loaders[view]();
   }
 
-  // â”€â”€ Mobile Sidebar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Mobile Sidebar ─────────────────────────────────────────────
   bindMobileHeader() {
     const hamburger = document.getElementById('hamburger-btn');
     const overlay   = document.getElementById('sidebar-overlay');
-
     hamburger?.addEventListener('click', () => this.toggleSidebar());
     overlay?.addEventListener('click',   () => this.closeSidebar());
   }
@@ -148,7 +158,7 @@ class FloralynAdmin {
     document.getElementById('sidebar-overlay')?.classList.remove('visible');
   }
 
-  // â”€â”€ Logout â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Logout ──────────────────────────────────────────────────────
   bindLogout() {
     document.getElementById('logout-btn')?.addEventListener('click', async () => {
       const confirmed = await this.confirm('Sign out of Floralyn Admin?', 'Sign Out');
@@ -159,7 +169,7 @@ class FloralynAdmin {
     });
   }
 
-  // â”€â”€ Dashboard â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Dashboard ───────────────────────────────────────────────────
   async loadDashboard() {
     const today = new Date().toISOString().split('T')[0];
     const plus7 = new Date(Date.now() + 7 * 864e5).toISOString().split('T')[0];
@@ -191,7 +201,6 @@ class FloralynAdmin {
     this.setText('stat-gallery',   gallery.length);
     this.setText('stat-services',  services.length);
 
-    // Recent appointments (last 5)
     const { data: recent } = await this.db
       .from('appointments')
       .select('*')
@@ -202,7 +211,7 @@ class FloralynAdmin {
     if (!container) return;
 
     if (!recent || recent.length === 0) {
-      container.innerHTML = this.emptyState('ðŸ“…', 'No appointments yet');
+      container.innerHTML = this.emptyState('📅', 'No appointments yet');
       return;
     }
 
@@ -212,14 +221,13 @@ class FloralynAdmin {
     });
   }
 
-  // â”€â”€ Appointments â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Appointments ────────────────────────────────────────────────
   async loadAppointments() {
-    const status  = document.getElementById('filter-status')?.value  || 'ALL';
-    const search  = (document.getElementById('filter-search')?.value || '').trim().toLowerCase();
+    const status   = document.getElementById('filter-status')?.value  || 'ALL';
+    const search   = (document.getElementById('filter-search')?.value || '').trim().toLowerCase();
     const dateFrom = document.getElementById('filter-date')?.value   || '';
 
     let query = this.db.from('appointments').select('*').order('created_at', { ascending: false });
-
     if (status !== 'ALL') query = query.eq('status', status);
     if (dateFrom)         query = query.gte('preferred_date', dateFrom);
 
@@ -233,8 +241,6 @@ class FloralynAdmin {
     }
 
     let appts = data || [];
-
-    // Client-side text search (name, phone, service)
     if (search) {
       appts = appts.filter(a =>
         a.name?.toLowerCase().includes(search) ||
@@ -245,7 +251,7 @@ class FloralynAdmin {
     }
 
     if (appts.length === 0) {
-      container.innerHTML = this.emptyState('ðŸ“…', 'No appointments found matching your filters');
+      container.innerHTML = this.emptyState('📅', 'No appointments found matching your filters');
       return;
     }
 
@@ -284,16 +290,16 @@ class FloralynAdmin {
   renderApptCard(a) {
     const date = a.preferred_date
       ? new Date(a.preferred_date + 'T00:00:00').toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
-      : 'â€”';
+      : '—';
 
     return `
       <div class="appt-card" data-id="${this.esc(a.id)}" tabindex="0" role="button"
            aria-label="View appointment for ${this.esc(a.name)}">
         <div>
           <div class="appt-name">${this.esc(a.name)}</div>
-          <div class="appt-phone">ðŸ“ž ${this.esc(a.phone)}</div>
-          <div class="appt-service">ðŸ’… ${this.esc(a.service)}</div>
-          <div class="appt-meta">ðŸ“… ${date} â€¢ ${this.esc(a.preferred_time || 'â€”')}</div>
+          <div class="appt-phone">📞 ${this.esc(a.phone)}</div>
+          <div class="appt-service">💅 ${this.esc(a.service)}</div>
+          <div class="appt-meta">📅 ${date} • ${this.esc(a.preferred_time || '—')}</div>
         </div>
         <div class="appt-right">
           <span class="badge badge-${this.esc(a.status)}">${this.esc(a.status)}</span>
@@ -304,21 +310,13 @@ class FloralynAdmin {
 
   async openApptModal(id) {
     const { data: a, error } = await this.db
-      .from('appointments')
-      .select('*')
-      .eq('id', id)
-      .single();
-
+      .from('appointments').select('*').eq('id', id).single();
     if (error || !a) { this.toast('Could not load appointment.', 'error'); return; }
 
     this.currentAppt = a;
 
-    const date = a.preferred_date
-      ? new Date(a.preferred_date + 'T00:00:00').toLocaleDateString('en-IN', { dateStyle: 'long' })
-      : 'â€”';
-    const created = a.created_at
-      ? new Date(a.created_at).toLocaleString('en-IN')
-      : 'â€”';
+    const date    = a.preferred_date ? new Date(a.preferred_date + 'T00:00:00').toLocaleDateString('en-IN', { dateStyle: 'long' }) : '—';
+    const created = a.created_at ? new Date(a.created_at).toLocaleString('en-IN') : '—';
 
     const body = document.getElementById('appt-modal-body');
     const foot = document.getElementById('appt-modal-footer');
@@ -347,7 +345,7 @@ class FloralynAdmin {
         </div>
         <div class="appt-detail-field">
           <label>Time</label>
-          <p>${this.esc(a.preferred_time || 'â€”')}</p>
+          <p>${this.esc(a.preferred_time || '—')}</p>
         </div>
         <div class="appt-detail-field appt-detail-full">
           <label>Service</label>
@@ -374,28 +372,26 @@ class FloralynAdmin {
 
       <div class="status-actions">
         <span style="font-size:12px;color:var(--text-muted);align-self:center;">Change status:</span>
-        ${a.status !== 'CONFIRMED'  ? `<button class="status-btn btn-confirm"  data-status="CONFIRMED">âœ… Confirm</button>`    : ''}
-        ${a.status !== 'DECLINED'   ? `<button class="status-btn btn-decline"  data-status="DECLINED">âŒ Decline</button>`    : ''}
-        ${a.status !== 'COMPLETED'  ? `<button class="status-btn btn-complete" data-status="COMPLETED">ðŸ Complete</button>` : ''}
-        ${a.status !== 'CANCELLED'  ? `<button class="status-btn btn-cancel"   data-status="CANCELLED">ðŸš« Cancel</button>`   : ''}
+        ${a.status !== 'CONFIRMED'  ? `<button class="status-btn btn-confirm"  data-status="CONFIRMED">✅ Confirm</button>`    : ''}
+        ${a.status !== 'DECLINED'   ? `<button class="status-btn btn-decline"  data-status="DECLINED">❌ Decline</button>`    : ''}
+        ${a.status !== 'COMPLETED'  ? `<button class="status-btn btn-complete" data-status="COMPLETED">🏁 Complete</button>` : ''}
+        ${a.status !== 'CANCELLED'  ? `<button class="status-btn btn-cancel"   data-status="CANCELLED">🚫 Cancel</button>`   : ''}
       </div>
 
       <div class="appt-notes-group">
         <label for="appt-notes-input">Private Notes (owner only)</label>
-        <textarea id="appt-notes-input" placeholder="Add internal notesâ€¦" maxlength="2000">${this.esc(a.notes || '')}</textarea>
+        <textarea id="appt-notes-input" placeholder="Add internal notes…" maxlength="2000">${this.esc(a.notes || '')}</textarea>
       </div>`;
 
     foot.innerHTML = `
-      <button class="btn-secondary" id="appt-delete-btn">ðŸ—‘ï¸ Delete</button>
-      <button class="btn-secondary" id="appt-notes-save">ðŸ’¾ Save Notes</button>
+      <button class="btn-secondary" id="appt-delete-btn">🗑️ Delete</button>
+      <button class="btn-secondary" id="appt-notes-save">💾 Save Notes</button>
       <button class="btn-primary" id="appt-modal-done">Done</button>`;
 
-    // Status change buttons
     body.querySelectorAll('.status-btn').forEach(btn => {
       btn.addEventListener('click', () => this.changeApptStatus(a.id, btn.dataset.status));
     });
 
-    // Save notes
     foot.querySelector('#appt-notes-save').addEventListener('click', async () => {
       const notes = document.getElementById('appt-notes-input').value.slice(0, 2000);
       await this.db.from('appointments').update({ notes }).eq('id', a.id);
@@ -403,12 +399,10 @@ class FloralynAdmin {
       await this.audit('UPDATE_NOTES', 'appointment', a.id, { name: a.name });
     });
 
-    // Delete
     foot.querySelector('#appt-delete-btn').addEventListener('click', async () => {
       const confirmed = await this.confirm(
         `Permanently delete ${a.name}'s appointment? This cannot be undone.`,
-        'Delete Permanently',
-        true
+        'Delete Permanently', true
       );
       if (!confirmed) return;
       await this.db.from('appointments').delete().eq('id', a.id);
@@ -420,43 +414,34 @@ class FloralynAdmin {
     });
 
     foot.querySelector('#appt-modal-done').addEventListener('click', () => this.closeApptModal());
-
     this.openModal('appt-modal-overlay');
   }
 
   async changeApptStatus(id, newStatus) {
-    const confirmed = await this.confirm(
-      `Set appointment status to ${newStatus}?`,
-      'Update Status'
-    );
+    const confirmed = await this.confirm(`Set appointment status to ${newStatus}?`, 'Update Status');
     if (!confirmed) return;
 
-    const { error } = await this.db
-      .from('appointments')
-      .update({ status: newStatus })
-      .eq('id', id);
-
+    const { error } = await this.db.from('appointments').update({ status: newStatus }).eq('id', id);
     if (error) { this.toast('Failed to update status.', 'error'); return; }
 
     await this.audit('UPDATE_STATUS', 'appointment', id, { status: newStatus, name: this.currentAppt?.name });
     this.toast(`Status updated to ${newStatus}.`, 'success');
     this.closeApptModal();
-
     if (this.currentView === 'appointments') await this.loadAppointments();
     else await this.loadDashboard();
   }
 
   closeApptModal() { this.closeModal('appt-modal-overlay'); }
 
-  // â”€â”€ Gallery â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Gallery ─────────────────────────────────────────────────────
   async loadGallery() {
-    const { data, error } = await this.db
-      .from('gallery')
-      .select('*')
-      .order('sort_order', { ascending: true });
-
     const container = document.getElementById('gallery-grid-admin');
     if (!container) return;
+
+    container.innerHTML = `<div class="empty-state"><div class="empty-icon">⏳</div><p>Loading gallery…</p></div>`;
+
+    const { data, error } = await this.db
+      .from('gallery').select('*').order('sort_order', { ascending: true });
 
     if (error) {
       container.innerHTML = `<p style="color:var(--danger)">Failed to load gallery.</p>`;
@@ -464,7 +449,7 @@ class FloralynAdmin {
     }
 
     if (!data || data.length === 0) {
-      container.innerHTML = this.emptyState('ðŸ–¼ï¸', 'No photos yet â€” upload your first gallery image!');
+      container.innerHTML = this.emptyState('🖼️', 'No photos yet — upload your first gallery image!');
       return;
     }
 
@@ -475,11 +460,13 @@ class FloralynAdmin {
           alt="${this.esc(item.alt_text || 'Gallery image')}"
           loading="lazy" />
         <div class="gallery-item-controls">
-          <button class="btn-edit-gallery" data-id="${this.esc(item.id)}" title="Edit alt text and title">âœï¸ Edit</button>
+          <button class="btn-edit-gallery" data-id="${this.esc(item.id)}" title="Edit alt text and title">✏️ Edit</button>
+          <button class="btn-move-up" data-id="${this.esc(item.id)}" data-idx="${idx}" title="Move up" ${idx === 0 ? 'disabled' : ''}>↑</button>
+          <button class="btn-move-dn" data-id="${this.esc(item.id)}" data-idx="${idx}" title="Move down" ${idx === data.length - 1 ? 'disabled' : ''}>↓</button>
           <button class="btn-toggle-gallery" data-id="${this.esc(item.id)}" data-visible="${item.visible}" title="${item.visible ? 'Hide' : 'Show'}">
-            ${item.visible ? 'ðŸ‘ï¸ Hide' : 'ðŸ™ˆ Show'}
+            ${item.visible ? '👁️ Hide' : '🙈 Show'}
           </button>
-          <button class="btn-del btn-del-gallery" data-id="${this.esc(item.id)}" title="Delete photo">ðŸ—‘ï¸</button>
+          <button class="btn-del btn-del-gallery" data-id="${this.esc(item.id)}" title="Delete photo">🗑️</button>
         </div>
       </div>`).join('');
 
@@ -504,6 +491,38 @@ class FloralynAdmin {
         this.deleteGalleryItem(btn.dataset.id, data);
       });
     });
+
+    // Sort order: move up
+    container.querySelectorAll('.btn-move-up').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const idx  = parseInt(btn.dataset.idx, 10);
+        if (idx <= 0) return;
+        const curr = data[idx];
+        const prev = data[idx - 1];
+        await Promise.all([
+          this.db.from('gallery').update({ sort_order: prev.sort_order }).eq('id', curr.id),
+          this.db.from('gallery').update({ sort_order: curr.sort_order }).eq('id', prev.id),
+        ]);
+        await this.loadGallery();
+      });
+    });
+
+    // Sort order: move down
+    container.querySelectorAll('.btn-move-dn').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const idx  = parseInt(btn.dataset.idx, 10);
+        if (idx >= data.length - 1) return;
+        const curr = data[idx];
+        const next = data[idx + 1];
+        await Promise.all([
+          this.db.from('gallery').update({ sort_order: next.sort_order }).eq('id', curr.id),
+          this.db.from('gallery').update({ sort_order: curr.sort_order }).eq('id', next.id),
+        ]);
+        await this.loadGallery();
+      });
+    });
   }
 
   bindGalleryUpload() {
@@ -515,14 +534,20 @@ class FloralynAdmin {
       if (!files.length) return;
 
       const ALLOWED_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/avif']);
-      const MAX_SIZE_MB   = 10;
+      const MAX_SIZE_BYTES = 15 * 1024 * 1024; // 15 MB pre-compression
+      const MAX_BATCH      = 20;
 
-      const invalid = files.filter(f => !ALLOWED_TYPES.has(f.type) || f.size > MAX_SIZE_MB * 1024 * 1024);
-      if (invalid.length > 0) {
-        this.toast(`${invalid.length} file(s) rejected. Only JPEG, PNG, WebP, AVIF up to 10MB.`, 'error');
+      if (files.length > MAX_BATCH) {
+        this.toast(`Max ${MAX_BATCH} files per upload batch.`, 'error');
+        return;
       }
 
-      const valid = files.filter(f => ALLOWED_TYPES.has(f.type) && f.size <= MAX_SIZE_MB * 1024 * 1024);
+      // Validate type and size before compression
+      const invalid = files.filter(f => !ALLOWED_TYPES.has(f.type) || f.size > MAX_SIZE_BYTES);
+      if (invalid.length > 0) {
+        this.toast(`${invalid.length} file(s) rejected. Only JPEG, PNG, WebP, AVIF up to 15 MB.`, 'error');
+      }
+      const valid = files.filter(f => ALLOWED_TYPES.has(f.type) && f.size <= MAX_SIZE_BYTES);
       if (!valid.length) return;
 
       const progressDiv  = document.getElementById('upload-progress');
@@ -532,51 +557,91 @@ class FloralynAdmin {
       progressDiv.style.display = '';
       progressFill.style.width  = '0%';
 
-      for (let i = 0; i < valid.length; i++) {
-        const file    = valid[i];
-        const ext     = file.name.split('.').pop().toLowerCase();
-        const safeName = `${crypto.randomUUID()}.${ext}`;
-        const path    = `public/${safeName}`;
+      // Get current max sort_order
+      const { data: sortData } = await this.db
+        .from('gallery').select('sort_order').order('sort_order', { ascending: false }).limit(1);
+      let nextOrder = (sortData?.[0]?.sort_order ?? 0) + 100;
 
-        statusText.textContent = `Uploading ${i + 1} of ${valid.length}: ${file.name}`;
+      let successCount = 0;
+      for (let i = 0; i < valid.length; i++) {
+        const file = valid[i];
+        statusText.textContent = `Compressing ${i + 1}/${valid.length}: ${file.name}`;
+
+        let compressed;
+        try {
+          compressed = await compressImage(file);
+        } catch (compressErr) {
+          this.toast(`Compression failed for ${file.name}.`, 'error');
+          continue;
+        }
+
+        // Sanitized storage path — no user-controlled characters in filename
+        const path = `gallery/${Date.now()}-${Math.random().toString(36).slice(2)}.jpg`;
+        statusText.textContent = `Uploading ${i + 1}/${valid.length}: ${file.name}`;
 
         const { error: uploadErr } = await this.db.storage
           .from('gallery')
-          .upload(path, file, { contentType: file.type, upsert: false });
+          .upload(path, compressed, { contentType: 'image/jpeg', upsert: false });
 
         if (uploadErr) {
           this.toast(`Upload failed for ${file.name}: ${uploadErr.message}`, 'error');
           continue;
         }
 
-        const { data: urlData } = this.db.storage.from('gallery').getPublicUrl(path);
+        const { data: { publicUrl } } = this.db.storage.from('gallery').getPublicUrl(path);
+
+        // Get dimensions from compressed canvas (reuse the image)
+        const dims = await this._getImageDimensions(compressed);
 
         const { error: dbErr } = await this.db.from('gallery').insert({
           storage_path: path,
-          public_url:   urlData.publicUrl,
+          public_url:   publicUrl,
           alt_text:     'Nail art by Floralyn',
           visible:      true,
-          sort_order:   Date.now(),
-          file_size:    file.size,
+          sort_order:   nextOrder,
+          file_size:    compressed.size,
+          width:        dims.w,
+          height:       dims.h,
         });
 
         if (dbErr) {
-          this.toast(`Database error for ${file.name}.`, 'error');
+          this.toast(`Database error for ${file.name}: ${dbErr.message}`, 'error');
           continue;
         }
 
-        await this.audit('GALLERY_UPLOAD', 'gallery', safeName, { filename: file.name, size: file.size });
+        await this.audit('GALLERY_UPLOAD', 'gallery', path, {
+          filename: file.name,
+          original_size: file.size,
+          compressed_size: compressed.size,
+        });
 
+        nextOrder += 100;
+        successCount++;
         progressFill.style.width = `${Math.round(((i + 1) / valid.length) * 100)}%`;
       }
 
-      statusText.textContent = `Done! ${valid.length} photo(s) uploaded.`;
+      statusText.textContent = `Done! ${successCount}/${valid.length} photo(s) uploaded.`;
       input.value = '';
-
       setTimeout(() => { progressDiv.style.display = 'none'; }, 2500);
 
-      await this.loadGallery();
-      this.toast(`${valid.length} photo(s) uploaded successfully.`, 'success');
+      if (successCount > 0) {
+        await this.loadGallery();
+        this.toast(`${successCount} photo(s) uploaded successfully.`, 'success');
+      }
+    });
+  }
+
+  /** Returns image dimensions from a File/Blob */
+  _getImageDimensions(file) {
+    return new Promise(resolve => {
+      const url = URL.createObjectURL(file);
+      const img = new Image();
+      img.onload = () => {
+        resolve({ w: img.naturalWidth, h: img.naturalHeight });
+        URL.revokeObjectURL(url);
+      };
+      img.onerror = () => { resolve({ w: 0, h: 0 }); URL.revokeObjectURL(url); };
+      img.src = url;
     });
   }
 
@@ -601,30 +666,24 @@ class FloralynAdmin {
     if (!item) return;
 
     const confirmed = await this.confirm(
-      `Delete this photo permanently? It will be removed from the website.`,
-      'Delete Photo',
-      true
+      'Delete this photo permanently? It will be removed from the website.',
+      'Delete Photo', true
     );
     if (!confirmed) return;
 
-    // Delete from Storage
     if (item.storage_path) {
       await this.db.storage.from('gallery').remove([item.storage_path]);
     }
-
-    // Delete from database
     await this.db.from('gallery').delete().eq('id', id);
     await this.audit('GALLERY_DELETE', 'gallery', id, { path: item.storage_path });
     this.toast('Photo deleted.', 'success');
     await this.loadGallery();
   }
 
-  // â”€â”€ Services â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Services ────────────────────────────────────────────────────
   async loadServices() {
     const { data, error } = await this.db
-      .from('services')
-      .select('*')
-      .order('sort_order', { ascending: true });
+      .from('services').select('*').order('sort_order', { ascending: true });
 
     const container = document.getElementById('services-list');
     if (!container) return;
@@ -635,7 +694,7 @@ class FloralynAdmin {
     }
 
     if (!data || data.length === 0) {
-      container.innerHTML = this.emptyState('ðŸ’…', 'No services yet. Click "+ Add Service" to create one.');
+      container.innerHTML = this.emptyState('💅', 'No services yet. Click "+ Add Service" to create one.');
       return;
     }
 
@@ -650,8 +709,8 @@ class FloralynAdmin {
           ${s.description ? `<div class="service-desc">${this.esc(s.description)}</div>` : ''}
         </div>
         <div class="service-actions">
-          <button class="btn-secondary btn-edit-service" data-id="${this.esc(s.id)}" style="font-size:12px;padding:6px 12px;">âœï¸ Edit</button>
-          <button class="btn-secondary btn-del-service" data-id="${this.esc(s.id)}" style="font-size:12px;padding:6px 12px;color:var(--danger);border-color:var(--danger)">ðŸ—‘ï¸</button>
+          <button class="btn-secondary btn-edit-service" data-id="${this.esc(s.id)}" style="font-size:12px;padding:6px 12px;">✏️ Edit</button>
+          <button class="btn-secondary btn-del-service" data-id="${this.esc(s.id)}" style="font-size:12px;padding:6px 12px;color:var(--danger);border-color:var(--danger)">🗑️</button>
         </div>
       </div>`).join('');
 
@@ -694,8 +753,7 @@ class FloralynAdmin {
   async deleteService(s) {
     const confirmed = await this.confirm(
       `Delete "${s.name}"? This will remove it from the booking form.`,
-      'Delete Service',
-      true
+      'Delete Service', true
     );
     if (!confirmed) return;
     await this.db.from('services').delete().eq('id', s.id);
@@ -704,22 +762,89 @@ class FloralynAdmin {
     await this.loadServices();
   }
 
-  // â”€â”€ Settings â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Settings ────────────────────────────────────────────────────
   async loadSettings() {
-    const { data } = await this.db.from('settings').select('*');
+    const { data } = await this.db
+      .from('settings')
+      .select('*')
+      .in('key', ['business', 'booking', 'timeslots']);
+
     if (!data) return;
 
-    const biz     = data.find(r => r.key === 'business')?.value || {};
-    const booking = data.find(r => r.key === 'booking')?.value  || {};
+    const biz      = data.find(r => r.key === 'business')?.value  || {};
+    const booking  = data.find(r => r.key === 'booking')?.value   || {};
+    const timeslots = data.find(r => r.key === 'timeslots')?.value || [];
 
+    // Business info
     this.setVal('s-name',      biz.name      || '');
     this.setVal('s-email',     biz.email     || '');
     this.setVal('s-instagram', biz.instagram || '');
-    this.setVal('s-whatsapp',  biz.whatsapp  || '');
-    this.setVal('s-min-days',  booking.advance_days_min     ?? 1);
-    this.setVal('s-max-days',  booking.advance_days_max     ?? 90);
-    this.setVal('s-open',      booking.business_hours_start || '10:00');
-    this.setVal('s-close',     booking.business_hours_end   || '19:00');
+    this.setVal('s-phone',     biz.phone     || '');
+
+    // Booking rules
+    this.setVal('s-min-days', booking.advance_days_min     ?? 1);
+    this.setVal('s-max-days', booking.advance_days_max     ?? 90);
+    this.setVal('s-open',     booking.business_hours_start || '10:00');
+    this.setVal('s-close',    booking.business_hours_end   || '19:00');
+
+    // Closed days
+    const closedDays = booking.closed_days || [];
+    document.querySelectorAll('#closed-days-grid input[type="checkbox"]').forEach(cb => {
+      cb.checked = closedDays.includes(parseInt(cb.value, 10));
+    });
+
+    // Time slots editor
+    this._renderTimeslots(Array.isArray(timeslots) ? timeslots : []);
+
+    // Wire up Add Time Slot button (only once)
+    const addBtn = document.getElementById('add-timeslot-btn');
+    if (addBtn && !addBtn._bound) {
+      addBtn._bound = true;
+      addBtn.addEventListener('click', () => {
+        this._addTimeslotRow({ group: 'Morning', time: '', label: '' });
+      });
+    }
+  }
+
+  _renderTimeslots(slots) {
+    const editor = document.getElementById('timeslots-editor');
+    if (!editor) return;
+    editor.innerHTML = '';
+    slots.forEach(slot => this._addTimeslotRow(slot));
+  }
+
+  _addTimeslotRow(slot = { group: 'Morning', time: '', label: '' }) {
+    const editor = document.getElementById('timeslots-editor');
+    if (!editor) return;
+
+    const row = document.createElement('div');
+    row.className = 'timeslot-row';
+    row.innerHTML = `
+      <select class="ts-group">
+        <option ${slot.group === 'Morning'   ? 'selected' : ''}>Morning</option>
+        <option ${slot.group === 'Afternoon' ? 'selected' : ''}>Afternoon</option>
+        <option ${slot.group === 'Evening'   ? 'selected' : ''}>Evening</option>
+      </select>
+      <input type="time" class="ts-time"  value="${this.esc(slot.time  || '')}" />
+      <input type="text" class="ts-label" value="${this.esc(slot.label || '')}" placeholder="Display label e.g. 10:00 AM" maxlength="30" />
+      <button type="button" class="timeslot-del" title="Remove slot">✕</button>`;
+
+    row.querySelector('.timeslot-del').addEventListener('click', () => row.remove());
+    editor.appendChild(row);
+  }
+
+  _collectTimeslots() {
+    const rows = document.querySelectorAll('#timeslots-editor .timeslot-row');
+    return Array.from(rows).map(row => ({
+      group: row.querySelector('.ts-group').value,
+      time:  row.querySelector('.ts-time').value,
+      label: row.querySelector('.ts-label').value.trim(),
+    })).filter(s => s.time);  // only include rows with a time set
+  }
+
+  _collectClosedDays() {
+    const checked = document.querySelectorAll('#closed-days-grid input[type="checkbox"]:checked');
+    return Array.from(checked).map(cb => parseInt(cb.value, 10));
   }
 
   bindSettingsForm() {
@@ -729,11 +854,14 @@ class FloralynAdmin {
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
 
+      // Strip HTML from all string inputs
+      const strip = str => str.replace(/<[^>]*>/g, '').trim();
+
       const bizData = {
-        name:      this.getVal('s-name'),
-        email:     this.getVal('s-email'),
-        instagram: this.getVal('s-instagram'),
-        whatsapp:  this.getVal('s-whatsapp'),
+        name:      strip(this.getVal('s-name')),
+        email:     strip(this.getVal('s-email')),
+        instagram: strip(this.getVal('s-instagram')),
+        phone:     strip(this.getVal('s-phone')),
       };
 
       const bookingData = {
@@ -741,32 +869,41 @@ class FloralynAdmin {
         advance_days_max:     parseInt(this.getVal('s-max-days'), 10)  || 90,
         business_hours_start: this.getVal('s-open'),
         business_hours_end:   this.getVal('s-close'),
+        closed_days:          this._collectClosedDays(),
       };
 
-      await Promise.all([
-        this.db.from('settings').upsert({ key: 'business', value: bizData }),
-        this.db.from('settings').upsert({ key: 'booking',  value: bookingData }),
-      ]);
+      const slotsData = this._collectTimeslots();
 
-      await this.audit('UPDATE_SETTINGS', 'settings', null, {});
+      const { error } = await this.db.from('settings').upsert([
+        { key: 'business',  value: bizData },
+        { key: 'booking',   value: bookingData },
+        { key: 'timeslots', value: slotsData },
+      ], { onConflict: 'key' });
+
+      if (error) {
+        this.toast(`Save failed: ${error.message}`, 'error');
+        return;
+      }
+
+      await this.audit('UPDATE_SETTINGS', 'settings', null, {
+        slots_count: slotsData.length,
+        closed_days: bookingData.closed_days,
+      });
 
       const statusEl = document.getElementById('settings-status');
       if (statusEl) {
-        statusEl.textContent = 'âœ… Settings saved!';
+        statusEl.textContent = '✅ Settings saved!';
         setTimeout(() => { statusEl.textContent = ''; }, 3000);
       }
 
-      this.toast('Settings saved.', 'success');
+      this.toast('Settings saved successfully.', 'success');
     });
   }
 
-  // â”€â”€ Audit Log â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Audit Log ───────────────────────────────────────────────────
   async loadAuditLog() {
     const { data, error } = await this.db
-      .from('audit_log')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .limit(50);
+      .from('audit_log').select('*').order('created_at', { ascending: false }).limit(50);
 
     const container = document.getElementById('audit-list');
     if (!container) return;
@@ -777,7 +914,7 @@ class FloralynAdmin {
     }
 
     if (!data || data.length === 0) {
-      container.innerHTML = this.emptyState('ðŸ“', 'No audit entries yet.');
+      container.innerHTML = this.emptyState('📋', 'No audit entries yet.');
       return;
     }
 
@@ -786,7 +923,7 @@ class FloralynAdmin {
         <div class="audit-time">${new Date(entry.created_at).toLocaleString('en-IN')}</div>
         <div>
           <div class="audit-action">${this.esc(entry.action)}</div>
-          <div class="audit-details">${entry.entity_type ? `${this.esc(entry.entity_type)} Â· ` : ''}${entry.entity_id ? `${this.esc(entry.entity_id.slice(0, 8))}` : ''}</div>
+          <div class="audit-details">${entry.entity_type ? `${this.esc(entry.entity_type)} · ` : ''}${entry.entity_id ? `${this.esc(String(entry.entity_id).slice(0, 8))}` : ''}</div>
         </div>
       </div>`).join('');
   }
@@ -800,13 +937,29 @@ class FloralynAdmin {
         details:     details    || {},
       });
     } catch (_) {
-      // Non-fatal â€” audit failure should never block the operation
+      // Non-fatal — audit failure should never block the operation
     }
   }
 
-  // â”€â”€ Modal infrastructure â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Preview Tab ─────────────────────────────────────────────────
+  async loadPreview() {
+    if (this._previewBound) return;
+    this._previewBound = true;
+
+    const frame = document.getElementById('preview-iframe');
+    document.getElementById('preview-refresh')?.addEventListener('click', () => {
+      if (frame) {
+        // Force reload by temporarily clearing then restoring src
+        const src = frame.src;
+        frame.src = 'about:blank';
+        setTimeout(() => { frame.src = src; }, 50);
+      }
+    });
+  }
+
+  // ── Modal Infrastructure ────────────────────────────────────────
   bindModals() {
-    // Appointment modal close
+    // Appointment modal
     document.getElementById('appt-modal-close')?.addEventListener('click', () => this.closeApptModal());
     document.getElementById('appt-modal-overlay')?.addEventListener('click', e => {
       if (e.target.id === 'appt-modal-overlay') this.closeApptModal();
@@ -832,7 +985,7 @@ class FloralynAdmin {
       if (e.target.id === 'gallery-modal-overlay') this.closeModal('gallery-modal-overlay');
     });
 
-    // Close modals on Escape
+    // Escape key closes all modals
     document.addEventListener('keydown', e => {
       if (e.key === 'Escape') {
         ['appt-modal-overlay', 'service-modal-overlay', 'gallery-modal-overlay', 'confirm-overlay']
@@ -845,7 +998,6 @@ class FloralynAdmin {
     const overlay = document.getElementById(overlayId);
     if (overlay) {
       overlay.style.display = 'flex';
-      // Focus first interactive element for keyboard accessibility
       setTimeout(() => {
         const first = overlay.querySelector('button, input, textarea, [tabindex]');
         first?.focus();
@@ -865,14 +1017,18 @@ class FloralynAdmin {
     const name = document.getElementById('service-edit-name').value.trim().slice(0, 100);
     const desc = document.getElementById('service-edit-desc').value.trim().slice(0, 500);
 
-    if (!name) { this.toast('Service name is required.', 'error'); return; }
+    if (!name || name.length < 2) { this.toast('Service name must be 2–100 characters.', 'error'); return; }
 
     if (id) {
-      await this.db.from('services').update({ name, description: desc || null }).eq('id', id);
+      const { error } = await this.db.from('services').update({ name, description: desc || null }).eq('id', id);
+      if (error) { this.toast(`Update failed: ${error.message}`, 'error'); return; }
       await this.audit('UPDATE_SERVICE', 'service', id, { name });
       this.toast('Service updated.', 'success');
     } else {
-      const { data } = await this.db.from('services').insert({ name, description: desc || null, enabled: true, sort_order: Date.now() }).select('id').single();
+      const { data, error } = await this.db.from('services')
+        .insert({ name, description: desc || null, enabled: true, sort_order: Date.now() })
+        .select('id').single();
+      if (error) { this.toast(`Create failed: ${error.message}`, 'error'); return; }
       await this.audit('CREATE_SERVICE', 'service', data?.id, { name });
       this.toast('Service created.', 'success');
     }
@@ -888,14 +1044,15 @@ class FloralynAdmin {
 
     if (!alt) { this.toast('Alt text is required for accessibility.', 'error'); return; }
 
-    await this.db.from('gallery').update({ alt_text: alt, title: title || null }).eq('id', id);
+    const { error } = await this.db.from('gallery').update({ alt_text: alt, title: title || null }).eq('id', id);
+    if (error) { this.toast(`Save failed: ${error.message}`, 'error'); return; }
     await this.audit('UPDATE_GALLERY', 'gallery', id, { alt_text: alt });
     this.toast('Photo updated.', 'success');
     this.closeModal('gallery-modal-overlay');
     await this.loadGallery();
   }
 
-  // Confirm dialog â€” returns Promise<boolean>
+  // Confirm dialog — returns Promise<boolean>
   confirm(message, actionLabel = 'Confirm', isDanger = false) {
     return new Promise(resolve => {
       this._confirmResolve = resolve;
@@ -915,7 +1072,7 @@ class FloralynAdmin {
     }
   }
 
-  // â”€â”€ Toast â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Toast ───────────────────────────────────────────────────────
   toast(message, type = 'info') {
     const el = document.getElementById('toast');
     if (!el) return;
@@ -925,7 +1082,7 @@ class FloralynAdmin {
     this._toastTimer = setTimeout(() => { el.className = 'toast'; }, 3500);
   }
 
-  // â”€â”€ Utilities â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Utilities ───────────────────────────────────────────────────
   esc(str) {
     if (str == null) return '';
     return String(str)
@@ -948,16 +1105,16 @@ class FloralynAdmin {
     if (!iso) return '';
     const ms   = Date.now() - new Date(iso).getTime();
     const mins = Math.floor(ms / 60000);
-    if (mins < 1)   return 'just now';
-    if (mins < 60)  return `${mins}m ago`;
+    if (mins < 1)  return 'just now';
+    if (mins < 60) return `${mins}m ago`;
     const hrs = Math.floor(mins / 60);
-    if (hrs < 24)   return `${hrs}h ago`;
+    if (hrs < 24)  return `${hrs}h ago`;
     const days = Math.floor(hrs / 24);
     return `${days}d ago`;
   }
 }
 
-// â”€â”€ Boot â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Boot ──────────────────────────────────────────────────────────
 // Only run on dashboard.html, not on index.html
 document.addEventListener('DOMContentLoaded', () => {
   if (document.getElementById('app')) {

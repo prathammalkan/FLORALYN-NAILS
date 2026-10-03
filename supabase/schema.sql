@@ -198,3 +198,30 @@ ON CONFLICT DO NOTHING;
 -- 1. Public read (SELECT): (bucket_id = 'gallery')
 -- 2. Admin upload (INSERT): auth.role() = 'authenticated' AND bucket_id = 'gallery'
 -- 3. Admin delete (DELETE): auth.role() = 'authenticated' AND bucket_id = 'gallery'
+
+
+-- ================================================================
+-- Default time slots (Task 6 seed)
+-- ================================================================
+INSERT INTO settings (key, value) VALUES
+  ('timeslots', '[
+    {"group":"Morning",   "time":"10:00", "label":"10:00 AM"},
+    {"group":"Morning",   "time":"10:30", "label":"10:30 AM"},
+    {"group":"Morning",   "time":"11:00", "label":"11:00 AM"},
+    {"group":"Morning",   "time":"11:30", "label":"11:30 AM"},
+    {"group":"Afternoon", "time":"12:00", "label":"12:00 PM"},
+    {"group":"Afternoon", "time":"12:30", "label":"12:30 PM"},
+    {"group":"Afternoon", "time":"13:00", "label":"1:00 PM"},
+    {"group":"Afternoon", "time":"13:30", "label":"1:30 PM"},
+    {"group":"Afternoon", "time":"14:00", "label":"2:00 PM"},
+    {"group":"Afternoon", "time":"14:30", "label":"2:30 PM"},
+    {"group":"Afternoon", "time":"15:00", "label":"3:00 PM"},
+    {"group":"Afternoon", "time":"15:30", "label":"3:30 PM"},
+    {"group":"Evening",   "time":"16:00", "label":"4:00 PM"},
+    {"group":"Evening",   "time":"16:30", "label":"4:30 PM"},
+    {"group":"Evening",   "time":"17:00", "label":"5:00 PM"},
+    {"group":"Evening",   "time":"17:30", "label":"5:30 PM"},
+    {"group":"Evening",   "time":"18:00", "label":"6:00 PM"},
+    {"group":"Evening",   "time":"18:30", "label":"6:30 PM"}
+  ]')
+ON CONFLICT (key) DO NOTHING;

@@ -956,3 +956,57 @@ input:checked + .toggle-slider::after { transform: translateX(20px); }
   .stats-grid { grid-template-columns: 1fr; }
   .gallery-grid-admin { grid-template-columns: 1fr 1fr; }
 }
+
+/* ─── Preview ────────────────────────────────────────────────── */
+.preview-frame-wrap {
+  position: relative;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  overflow: hidden;
+  height: calc(100vh - 200px);
+  min-height: 500px;
+  background: #f9fafb;
+}
+.preview-frame-wrap iframe {
+  width: 100%; height: 100%;
+  border: none;
+  display: block;
+}
+.preview-note {
+  font-size: 13px;
+  color: #888;
+  background: #fffbeb;
+  border: 1px solid #fed7aa;
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin-bottom: 16px;
+}
+
+/* ─── Time Slots Editor ──────────────────────────────────────── */
+.timeslots-editor { display: flex; flex-direction: column; gap: 8px; }
+.timeslot-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.timeslot-row select, .timeslot-row input { padding: 8px 10px; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 13px; background: #fff; }
+.timeslot-row select { flex: 0 0 120px; }
+.timeslot-row input[type="time"] { flex: 0 0 110px; }
+.timeslot-row input[type="text"] { flex: 1; min-width: 100px; }
+.timeslot-del { background: #fee2e2; color: #dc2626; border: none; border-radius: 6px; padding: 6px 10px; cursor: pointer; font-size: 13px; }
+.timeslot-del:hover { background: #fecaca; }
+
+/* ─── Closed Days ────────────────────────────────────────────── */
+.closed-days-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+.day-toggle { display: flex; align-items: center; gap: 6px; font-size: 13px; cursor: pointer; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 8px 12px; transition: all .15s; }
+.day-toggle:has(input:checked) { background: #fce7f3; border-color: #f9a8d4; color: #be185d; }
+.day-toggle input { display: none; }
+
+/* ─── Gallery Admin Cards ────────────────────────────────────── */
+.gallery-admin-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; overflow: hidden; }
+.gallery-admin-card img { width: 100%; aspect-ratio: 1; object-fit: cover; display: block; }
+.gallery-card-body { padding: 10px; }
+.gallery-card-title { font-size: 12px; font-weight: 600; color: #374151; margin-bottom: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gallery-card-actions { display: flex; gap: 4px; margin-top: 8px; flex-wrap: wrap; }
+.gallery-card-actions button { flex: 1; font-size: 11px; padding: 4px 6px; border-radius: 6px; border: 1px solid #e5e7eb; background: #f9fafb; cursor: pointer; }
+.gallery-card-actions button:hover { background: #f3f4f6; }
+.gallery-card-actions .btn-del { background: #fee2e2; border-color: #fecaca; color: #dc2626; }
+.gallery-card-actions .btn-del:hover { background: #fecaca; }
+.vis-toggle { display: flex; align-items: center; gap: 6px; font-size: 11px; margin-top: 6px; }
+.vis-toggle input { accent-color: #a47dc4; }

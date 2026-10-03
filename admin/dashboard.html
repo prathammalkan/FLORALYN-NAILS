@@ -47,6 +47,9 @@
         <button class="nav-item" data-view="audit">
           <span class="nav-icon" aria-hidden="true">📝</span> Audit Log
         </button>
+        <button class="nav-item" data-view="preview">
+          <span class="nav-icon" aria-hidden="true">👁️</span> Preview Site
+        </button>
       </nav>
 
       <div class="sidebar-footer">
@@ -233,8 +236,8 @@
                 <input type="url" id="s-instagram" name="instagram" />
               </div>
               <div class="settings-field">
-                <label for="s-whatsapp">WhatsApp Number</label>
-                <input type="tel" id="s-whatsapp" name="whatsapp" placeholder="+91XXXXXXXXXX" inputmode="tel" />
+                <label for="s-phone">Phone Number</label>
+                <input type="tel" id="s-phone" name="phone" placeholder="+91XXXXXXXXXX" inputmode="tel" />
               </div>
             </div>
           </div>
@@ -263,6 +266,27 @@
             </div>
           </div>
 
+          <div class="settings-card">
+            <h3 class="settings-card-title">Time Slots</h3>
+            <p style="font-size:13px;color:#888;margin-bottom:12px">Manage available appointment time slots. These appear on the booking form.</p>
+            <div id="timeslots-editor" class="timeslots-editor"></div>
+            <button type="button" class="btn-secondary" id="add-timeslot-btn" style="margin-top:10px">+ Add Time Slot</button>
+          </div>
+
+          <div class="settings-card">
+            <h3 class="settings-card-title">Closed Days</h3>
+            <p style="font-size:13px;color:#888;margin-bottom:12px">Select which days of the week the studio is closed.</p>
+            <div class="closed-days-grid" id="closed-days-grid">
+              <label class="day-toggle"><input type="checkbox" value="0" /> Sunday</label>
+              <label class="day-toggle"><input type="checkbox" value="1" /> Monday</label>
+              <label class="day-toggle"><input type="checkbox" value="2" /> Tuesday</label>
+              <label class="day-toggle"><input type="checkbox" value="3" /> Wednesday</label>
+              <label class="day-toggle"><input type="checkbox" value="4" /> Thursday</label>
+              <label class="day-toggle"><input type="checkbox" value="5" /> Friday</label>
+              <label class="day-toggle"><input type="checkbox" value="6" /> Saturday</label>
+            </div>
+          </div>
+
           <div class="form-actions">
             <button type="submit" class="btn-primary">Save Settings</button>
             <span class="settings-status" id="settings-status" role="status" aria-live="polite"></span>
@@ -279,6 +303,23 @@
           <button class="btn-secondary" id="audit-refresh">Refresh</button>
         </div>
         <div id="audit-list" class="audit-list"></div>
+      </section>
+
+      <!-- ═══════════════════════════════════════════════════════ -->
+      <!--  PREVIEW VIEW                                           -->
+      <!-- ═══════════════════════════════════════════════════════ -->
+      <section class="view" id="view-preview" style="display:none">
+        <div class="page-header">
+          <h2 class="page-title">Site Preview</h2>
+          <div style="display:flex;gap:8px;align-items:center">
+            <button class="btn-secondary" id="preview-refresh">↻ Refresh</button>
+            <a href="https://floralyn-nails.vercel.app" target="_blank" rel="noopener" class="btn-primary" style="text-decoration:none">Open Live Site ↗</a>
+          </div>
+        </div>
+        <div class="preview-note">This preview shows the live site. Changes you make in admin (gallery, services, settings) will appear after a page refresh.</div>
+        <div class="preview-frame-wrap">
+          <iframe id="preview-iframe" src="https://floralyn-nails.vercel.app" title="Site preview" loading="lazy" sandbox="allow-same-origin allow-scripts allow-forms"></iframe>
+        </div>
       </section>
 
     </main><!-- /.main-content -->
