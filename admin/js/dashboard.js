@@ -1212,7 +1212,7 @@ FloralynAdmin.prototype.loadPromotions = async function() {
     this._bindBannerPreview();
 
   } catch(e) {
-    this.showToast('Failed to load promotions settings', 'error');
+    this.toast('Failed to load promotions settings', 'error');
   }
 
   // Bind save button (once)
@@ -1283,18 +1283,20 @@ FloralynAdmin.prototype.savePromotions = async function() {
     if (error) throw error;
 
     // Audit log
-    await this.db.from('audit_log').insert({
-      action: 'PROMOTIONS_SAVED',
-      entity_type: 'settings',
-      entity_id: 'banner',
-      details: { banner_enabled: banner.enabled, text_length: banner.text.length },
-    }).catch(() => {});
+    try {
+      await this.db.from('audit_log').insert({
+        action: 'PROMOTIONS_SAVED',
+        entity_type: 'settings',
+        entity_id: 'banner',
+        details: { banner_enabled: banner.enabled, text_length: banner.text.length },
+      });
+    } catch (_) {}
 
-    this.showToast('✅ Promotions saved! Changes will appear on your website within 1 minute.', 'success');
+    this.toast('✅ Promotions saved! Changes will appear on your website within 1 minute.', 'success');
     if (status) { status.textContent = '✅ Saved!'; setTimeout(() => { status.textContent = ''; }, 4000); }
 
   } catch(e) {
-    this.showToast('Failed to save: ' + e.message, 'error');
+    this.toast('Failed to save: ' + e.message, 'error');
   } finally {
     if (btn) { btn.disabled = false; btn.textContent = 'Save Changes'; }
   }

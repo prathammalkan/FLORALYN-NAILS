@@ -2135,3 +2135,41 @@ body.has-banner #intro { top: 38px; }
     padding-top: calc(var(--hh, 64px) + 38px + 60px);
   }
 }
+
+
+/* ════════════════════════════════════════════════════════════════
+   PREFERS-REDUCED-MOTION
+   ════════════════════════════════════════════════════════════════ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+
+  .anim-1, .anim-2, .anim-3, .anim-4, .anim-5 {
+    animation: none;
+    opacity: 1;
+  }
+
+  .marquee-track {
+    animation: none;
+  }
+
+  .float-btn {
+    transition: none;
+  }
+
+  .hero-badge {
+    animation: none;
+  }
+}

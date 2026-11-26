@@ -172,7 +172,6 @@ INSERT INTO settings (key, value) VALUES
     "tagline":    "Soft. Romantic. Pastel nails.",
     "email":      "floralyyn7@gmail.com",
     "instagram":  "https://www.instagram.com/floralyn_nails_07",
-    "whatsapp":   "",
     "timezone":   "Asia/Kolkata"
   }'),
   ('booking', '{

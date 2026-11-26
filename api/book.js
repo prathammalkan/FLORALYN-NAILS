@@ -1,6 +1,6 @@
-// api/send-whatsapp.js
+// api/book.js
+// Booking enquiry handler
 // Channels: Supabase (DB) → Resend (email) → Telegram (instant push)
-// Twilio removed — Email + Telegram is faster, free forever, zero spam.
 
 'use strict';
 
@@ -20,10 +20,23 @@ function isRateLimited(ip) {
   return false;
 }
 
-// ── Sanitise ──────────────────────────────────────────────────
+// ── Sanitise & Escape ─────────────────────────────────────────
 function san(v, max = 2000) {
   if (typeof v !== 'string') return '';
   return v.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '').trim().slice(0, max);
+}
+
+function escHtml(v) {
+  return String(v || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function escTg(v) {
+  return String(v || '').replace(/([_*`\[])/g, '\\$1');
 }
 
 // ── Allowed services ──────────────────────────────────────────
@@ -33,8 +46,8 @@ const SERVICES = new Set(['Simple Manicure','Gel Nails','Custom Design','Bridal 
 function buildEmail(d) {
   const row = (label, val) => !val ? '' : `
     <tr>
-      <td style="padding:9px 14px;font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:#8F5D87;width:100px;vertical-align:top;">${label}</td>
-      <td style="padding:9px 14px;font-size:14px;color:#3D1A47;font-weight:500;">${val}</td>
+      <td style="padding:9px 14px;font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:#8F5D87;width:100px;vertical-align:top;">${escHtml(label)}</td>
+      <td style="padding:9px 14px;font-size:14px;color:#3D1A47;font-weight:500;">${escHtml(val)}</td>
     </tr>`;
   return `<!DOCTYPE html>
 <html lang="en">
@@ -56,7 +69,7 @@ function buildEmail(d) {
       </table>
       <div style="margin-top:20px;padding:14px 18px;background:#fff7fb;border-radius:12px;border-left:3px solid #A47DC4;">
         <p style="margin:0;font-size:13px;color:#6E3A75;font-weight:600;">Action Required</p>
-        <p style="margin:4px 0 0;font-size:12px;color:#8F5D87;line-height:1.5;">Contact ${d.from_name} at ${d.phone} to confirm their slot.</p>
+        <p style="margin:4px 0 0;font-size:12px;color:#8F5D87;line-height:1.5;">Contact ${escHtml(d.from_name)} at ${escHtml(d.phone)} to confirm their slot.</p>
       </div>
     </div>
     <div style="padding:12px 28px 16px;border-top:1px solid #F2D6F3;">
@@ -124,6 +137,22 @@ module.exports = async function handler(req, res) {
   const data = { from_name, phone, date, time, service: normSvc, message };
   const out  = { ok: true, saved: false, email: false, emailErr: null, telegram: false, tgErr: null };
 
+  // ── Parse human-readable date to ISO (timezone-safe, e.g. "Tue, 25 Nov 2026" → "2026-11-25") ──
+  function parseDisplayDate(str) {
+    if (!str) return null;
+    const trimmed = String(str).trim();
+    if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return trimmed;
+    const MONTHS = { jan:'01', feb:'02', mar:'03', apr:'04', may:'05', jun:'06', jul:'07', aug:'08', sep:'09', oct:'10', nov:'11', dec:'12' };
+    const m = trimmed.match(/(\d{1,2})\s+([A-Za-z]{3})\s+(\d{4})/);
+    if (m) {
+      const mon = MONTHS[m[2].toLowerCase()];
+      if (mon) return `${m[3]}-${mon}-${m[1].padStart(2, '0')}`;
+    }
+    return null;
+  }
+  const isoDate = parseDisplayDate(date);
+  if (!isoDate) return res.status(400).json({ error: 'Invalid appointment date.' });
+
   // ── 1. Supabase ───────────────────────────────────────────────
   const sbUrl = process.env.SUPABASE_URL;
   const sbKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -132,7 +161,7 @@ module.exports = async function handler(req, res) {
       const sb = createClient(sbUrl, sbKey);
       const { error: e } = await sb.from('appointments').insert({
         name: from_name, phone, preferred_time: time,
-        preferred_date: null, service: normSvc,
+        preferred_date: isoDate, service: normSvc,
         message: message || null, status: 'PENDING',
       });
       if (!e) out.saved = true;
@@ -165,12 +194,12 @@ module.exports = async function handler(req, res) {
   if (tgToken && tgChatIds.length) {
     const tgMsg =
       `💅 *New Floralyn Booking!*\n\n` +
-      `👤 *Name:* ${from_name}\n` +
-      `📞 *Phone:* \`${phone}\`\n` +
-      `📅 *Date:* ${date}\n` +
-      `⏰ *Time:* ${time}\n` +
-      `💎 *Service:* ${normSvc}` +
-      (message ? `\n💬 *Note:* ${message}` : '') +
+      `👤 *Name:* ${escTg(from_name)}\n` +
+      `📞 *Phone:* \`${phone.replace(/`/g, '')}\`\n` +
+      `📅 *Date:* ${escTg(date)}\n` +
+      `⏰ *Time:* ${escTg(time)}\n` +
+      `💎 *Service:* ${escTg(normSvc)}` +
+      (message ? `\n💬 *Note:* ${escTg(message)}` : '') +
       `\n\n_Contact client to confirm 🌸_`;
 
     const sends = tgChatIds.map(chatId =>

@@ -1,7 +1,7 @@
 'use strict';
 
 /* ═══════════════════════════════════════════════════════════════
-   FLORALYN — script.js  (release build)
+   FLORALYN — script.js  (release build v3.1)
    ═══════════════════════════════════════════════════════════════ */
 
 const LOAD_AT     = Date.now();
@@ -209,6 +209,55 @@ function initGallery() {
   const dotsEl= document.getElementById('lb-dots');
   if (!gal || !lbox || !limg) return;
 
+  // Try to load dynamic gallery from Supabase, fall back to static HTML items
+  _tryLoadDynamicGallery(gal).finally(() => {
+    _bindLightbox(gal, lbox, limg, lp, ln, lx, dotsEl);
+  });
+}
+
+let _siteSettingsPromise = null;
+function fetchSiteData() {
+  if (!_siteSettingsPromise) {
+    _siteSettingsPromise = fetch('/api/site-settings', { cache: 'no-store' })
+      .then(r => (r.ok ? r.json() : null))
+      .catch(() => null);
+  }
+  return _siteSettingsPromise;
+}
+
+async function _tryLoadDynamicGallery(gal) {
+  try {
+    const data = await fetchSiteData();
+    if (!data || !data.ok || !Array.isArray(data.gallery) || data.gallery.length === 0) return;
+
+    // Preserve the trailing Instagram card if present
+    const driveCard = gal.querySelector('a.g-drive');
+    gal.querySelectorAll('button.g-item').forEach(btn => btn.remove());
+
+    data.gallery.forEach((item, idx) => {
+      if (typeof item.public_url !== 'string' || !item.public_url.startsWith('https://')) return;
+      const btn = document.createElement('button');
+      btn.className = 'g-item' + (idx === 0 ? ' g-tall' : idx === 3 ? ' g-wide' : '');
+      btn.setAttribute('aria-label', `View nail art photo ${idx + 1}`);
+      btn.dataset.i = String(idx);
+
+      const img = document.createElement('img');
+      img.src = item.public_url;
+      img.alt = item.alt_text || 'Nail art by Floralyn';
+      img.loading = idx === 0 ? 'eager' : 'lazy';
+
+      const over = document.createElement('div');
+      over.className = 'g-over';
+      over.innerHTML = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#fff" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>';
+
+      btn.append(img, over);
+      if (driveCard) gal.insertBefore(btn, driveCard);
+      else gal.appendChild(btn);
+    });
+  } catch (_) { /* fail silently — static HTML images remain */ }
+}
+
+function _bindLightbox(gal, lbox, limg, lp, ln, lx, dotsEl) {
   const items = Array.from(gal.querySelectorAll('button.g-item[data-i]'));
   const srcs  = items.map(el => ({ src: el.querySelector('img')?.src || '', alt: el.querySelector('img')?.alt || '' }));
   if (!srcs.length) return;
@@ -339,14 +388,22 @@ function initForm() {
     if (successEl) {
       successEl.removeAttribute('hidden');
       if (summaryEl) {
-        summaryEl.innerHTML = [
+        summaryEl.innerHTML = '';
+        [
           ['👤', data.name],
           ['📅', data.date],
           ['⏰', data.time],
           ['💎', data.service],
-        ].map(([icon, txt]) =>
-          `<div class="fsc-row"><span>${icon}</span><span>${txt}</span></div>`
-        ).join('');
+        ].forEach(([icon, txt]) => {
+          const row = document.createElement('div');
+          row.className = 'fsc-row';
+          const ico = document.createElement('span');
+          ico.textContent = icon;
+          const valEl = document.createElement('span');
+          valEl.textContent = txt;
+          row.append(ico, valEl);
+          summaryEl.appendChild(row);
+        });
       }
     }
   }
@@ -395,7 +452,7 @@ function initForm() {
 
     let ok = false;
     try {
-      const r = await fetch('/api/send-whatsapp', {
+      const r = await fetch('/api/book', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ from_name: name, phone, date, time, service: svc, message: msg }),
@@ -428,6 +485,8 @@ function initIntro() {
   if (sessionStorage.getItem('flIntro')) {
     el.style.display = 'none';
     el.remove();
+    // Count-up must still fire even when intro is skipped
+    initCountUp();
     return;
   }
 
@@ -468,9 +527,9 @@ function initCountUp() {
 /* ── Site Settings (dynamic, admin-controlled) ───────────────── */
 async function initSiteSettings() {
   try {
-    const res = await fetch('/api/site-settings', { cache: 'no-store' });
-    if (!res.ok) return;
-    const { settings } = await res.json();
+    const data = await fetchSiteData();
+    if (!data) return;
+    const { settings } = data;
     if (!settings) return;
 
     // ── Apply offer banner ──────────────────────────────────────

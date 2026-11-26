@@ -10,6 +10,8 @@
   <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large" />
   <meta name="geo.region" content="IN-GJ" />
   <meta name="geo.placename" content="Jetpur, Gujarat, India" />
+  <meta name="theme-color" content="#A47DC4" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#1e1228" media="(prefers-color-scheme: dark)" />
   <link rel="canonical" href="https://floralyn-nails.vercel.app/" />
 
   <meta property="og:type"        content="website" />
@@ -71,9 +73,10 @@
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="preload" as="image" href="images/sample1.jpg" />
+  <link rel="preload" as="image" href="images/sample1.jpg" fetchpriority="high" />
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400;1,600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
+  <noscript><style>.reveal{opacity:1;transform:none}.anim-1,.anim-2,.anim-3,.anim-4,.anim-5{opacity:1}</style></noscript>
 </head>
 <body>
 
@@ -220,7 +223,7 @@
 
   <!-- Right: full-bleed photo -->
   <div class="hero-photo" aria-hidden="true">
-    <img src="images/sample1.jpg" alt="" loading="eager" class="hero-photo-img" />
+    <img src="images/sample1.jpg" alt="" loading="eager" fetchpriority="high" class="hero-photo-img" />
     <div class="hero-photo-overlay"></div>
 
     <!-- Floating mini cards on photo -->
@@ -710,6 +713,22 @@
             <div class="fsc-summary" id="fsc-summary"></div>
             <button type="button" class="btn btn-outline fsc-again" id="fsc-again">Book another slot →</button>
           </div>
+
+          <!-- No-JS fallback -->
+          <noscript>
+            <div style="padding:24px;text-align:center;background:#fff7fb;border-radius:12px;margin-top:16px">
+              <p style="font-size:14px;color:#6E3A75;line-height:1.6;margin-bottom:12px">
+                JavaScript is required for the booking form.<br>
+                Please <strong>email or DM us</strong> to book your appointment:
+              </p>
+              <a href="mailto:floralyyn7@gmail.com" style="display:inline-block;margin:4px;padding:10px 20px;background:#6E3A75;color:#fff;border-radius:8px;text-decoration:none;font-weight:600;font-size:13px">
+                📧 floralyyn7@gmail.com
+              </a>
+              <a href="https://www.instagram.com/floralyn_nails_07" target="_blank" rel="noopener noreferrer" style="display:inline-block;margin:4px;padding:10px 20px;background:#A47DC4;color:#fff;border-radius:8px;text-decoration:none;font-weight:600;font-size:13px">
+                📱 @floralyn_nails_07
+              </a>
+            </div>
+          </noscript>
 
         </div>
       </div>
