@@ -38,7 +38,8 @@ ALTER TABLE appointments ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "Admin full access on appointments"
   ON appointments FOR ALL TO authenticated
-  USING (true) WITH CHECK (true);
+  USING ((auth.jwt() ->> 'email') = 'floralyn.admin@internal.app')
+  WITH CHECK ((auth.jwt() ->> 'email') = 'floralyn.admin@internal.app');
 
 -- ================================================================
 -- SERVICES
@@ -63,7 +64,8 @@ CREATE POLICY "Public read enabled services"
 -- Admin can manage all services
 CREATE POLICY "Admin full access on services"
   ON services FOR ALL TO authenticated
-  USING (true) WITH CHECK (true);
+  USING ((auth.jwt() ->> 'email') = 'floralyn.admin@internal.app')
+  WITH CHECK ((auth.jwt() ->> 'email') = 'floralyn.admin@internal.app');
 
 -- ================================================================
 -- GALLERY
@@ -93,7 +95,8 @@ CREATE POLICY "Public read visible gallery"
 -- Admin can manage all gallery items
 CREATE POLICY "Admin full access on gallery"
   ON gallery FOR ALL TO authenticated
-  USING (true) WITH CHECK (true);
+  USING ((auth.jwt() ->> 'email') = 'floralyn.admin@internal.app')
+  WITH CHECK ((auth.jwt() ->> 'email') = 'floralyn.admin@internal.app');
 
 -- ================================================================
 -- SETTINGS
@@ -109,7 +112,8 @@ ALTER TABLE settings ENABLE ROW LEVEL SECURITY;
 -- Only admin can read or write settings
 CREATE POLICY "Admin only on settings"
   ON settings FOR ALL TO authenticated
-  USING (true) WITH CHECK (true);
+  USING ((auth.jwt() ->> 'email') = 'floralyn.admin@internal.app')
+  WITH CHECK ((auth.jwt() ->> 'email') = 'floralyn.admin@internal.app');
 
 -- ================================================================
 -- AUDIT LOG
@@ -128,13 +132,17 @@ ALTER TABLE audit_log ENABLE ROW LEVEL SECURITY;
 -- Only admin can read audit log; admin actions insert log entries server-side
 CREATE POLICY "Admin only on audit_log"
   ON audit_log FOR ALL TO authenticated
-  USING (true) WITH CHECK (true);
+  USING ((auth.jwt() ->> 'email') = 'floralyn.admin@internal.app')
+  WITH CHECK ((auth.jwt() ->> 'email') = 'floralyn.admin@internal.app');
 
 -- ================================================================
 -- TRIGGERS — auto-update updated_at
 -- ================================================================
 CREATE OR REPLACE FUNCTION update_updated_at_column()
-RETURNS TRIGGER LANGUAGE plpgsql AS $$
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SET search_path = pg_catalog, public
+AS $$
 BEGIN
   NEW.updated_at = NOW();
   RETURN NEW;
@@ -195,8 +203,8 @@ ON CONFLICT DO NOTHING;
 --
 -- Then add these Storage policies:
 -- 1. Public read (SELECT): (bucket_id = 'gallery')
--- 2. Admin upload (INSERT): auth.role() = 'authenticated' AND bucket_id = 'gallery'
--- 3. Admin delete (DELETE): auth.role() = 'authenticated' AND bucket_id = 'gallery'
+-- 2. Admin upload (INSERT): bucket_id = 'gallery' AND (auth.jwt() ->> 'email') = 'floralyn.admin@internal.app'
+-- 3. Admin delete (DELETE): bucket_id = 'gallery' AND (auth.jwt() ->> 'email') = 'floralyn.admin@internal.app'
 
 
 -- ================================================================

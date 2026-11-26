@@ -2,6 +2,7 @@
 // Secure server-side admin authentication — credentials never touch the browser
 'use strict';
 
+const crypto = require('crypto');
 const { createClient } = require('@supabase/supabase-js');
 
 // ── In-memory rate limiter (5 attempts / 15 min per IP) ───────
@@ -18,27 +19,46 @@ function rateLimited(ip) {
   return false;
 }
 
-// ── Constant-time string compare (prevent timing attacks) ─────
+function getClientIp(req) {
+  const raw = req.headers['x-vercel-forwarded-for']
+    || req.headers['x-real-ip']
+    || req.headers['x-forwarded-for']
+    || req.socket?.remoteAddress
+    || 'unknown';
+  return String(raw).split(',')[0].trim();
+}
+
+// ── Constant-time string compare via SHA-256 + timingSafeEqual ─
 function safeEq(a, b) {
   if (typeof a !== 'string' || typeof b !== 'string') return false;
-  const la = Buffer.from(a.padEnd(128));
-  const lb = Buffer.from(b.padEnd(128));
-  let diff = la.length ^ lb.length;
-  for (let i = 0; i < Math.min(la.length, lb.length); i++) diff |= la[i] ^ lb[i];
-  return diff === 0 && a.length === b.length;
+  const ha = crypto.createHash('sha256').update(a, 'utf8').digest();
+  const hb = crypto.createHash('sha256').update(b, 'utf8').digest();
+  return crypto.timingSafeEqual(ha, hb);
 }
 
 module.exports = async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+  res.setHeader('Pragma', 'no-cache');
   res.setHeader('X-Content-Type-Options', 'nosniff');
 
-  // Method guard
+  // Same-origin / CSRF guard
+  const origin  = req.headers.origin || '';
+  const allowed = process.env.ALLOWED_ORIGIN || 'https://floralyn-nails.vercel.app';
+  const originOk = !origin || origin === allowed
+    || /^https:\/\/floralyn-nails(-[a-z0-9]+)?\.vercel\.app$/.test(origin)
+    || origin === 'http://localhost:3000' || origin === 'http://localhost:5500';
+
   if (req.method === 'OPTIONS') return res.status(204).end();
   if (req.method !== 'POST')   return res.status(405).json({ error: 'Method not allowed.' });
+  if (origin && !originOk)     return res.status(403).json({ error: 'Origin not allowed.' });
+
+  const ctype = String(req.headers['content-type'] || '').toLowerCase();
+  if (!ctype.includes('application/json')) {
+    return res.status(415).json({ error: 'Content-Type must be application/json.' });
+  }
 
   // Rate limit by IP
-  const ip = (req.headers['x-forwarded-for'] || req.socket?.remoteAddress || 'unknown')
-    .split(',')[0].trim();
+  const ip = getClientIp(req);
   if (rateLimited(ip)) {
     return res.status(429).json({ error: 'Too many attempts. Try again in 15 minutes.' });
   }
@@ -59,7 +79,9 @@ module.exports = async function handler(req, res) {
     }
   } catch { return res.status(400).json({ error: 'Invalid request body.' }); }
 
-  if (!body || typeof body !== 'object') return res.status(400).json({ error: 'Invalid body.' });
+  if (!body || typeof body !== 'object' || Array.isArray(body)) {
+    return res.status(400).json({ error: 'Invalid body.' });
+  }
 
   const { username, password } = body;
   if (!username || !password || typeof username !== 'string' || typeof password !== 'string') {
@@ -80,7 +102,6 @@ module.exports = async function handler(req, res) {
   const passOk = safeEq(password, expectedPass);
 
   if (!userOk || !passOk) {
-    // Add artificial delay to further slow brute-force
     await new Promise(r => setTimeout(r, 600 + Math.random() * 400));
     return res.status(401).json({ error: 'Invalid username or password.' });
   }
@@ -118,7 +139,6 @@ module.exports = async function handler(req, res) {
       }
     } catch (e) {
       console.error('[admin-login] Supabase admin setup error:', e.message);
-      // Non-fatal — attempt sign-in anyway
     }
   }
 

@@ -329,11 +329,11 @@ class FloralynAdmin {
         </div>
         <div class="appt-detail-field">
           <label>Phone</label>
-          <p><a href="tel:${this.esc(a.phone)}">${this.esc(a.phone)}</a></p>
+          <p><a href="tel:${this.esc(this.safeTel(a.phone))}">${this.esc(a.phone)}</a></p>
         </div>
         <div class="appt-detail-field">
           <label>Email</label>
-          <p>${a.email ? `<a href="mailto:${this.esc(a.email)}">${this.esc(a.email)}</a>` : '<span style="color:var(--text-muted)">Not provided</span>'}</p>
+          <p>${a.email ? `<a href="mailto:${this.esc(a.email.replace(/[\r\n\s<>]/g, ''))}">${this.esc(a.email)}</a>` : '<span style="color:var(--text-muted)">Not provided</span>'}</p>
         </div>
         <div class="appt-detail-field">
           <label>Instagram</label>
@@ -456,7 +456,7 @@ class FloralynAdmin {
     container.innerHTML = data.map((item, idx) => `
       <div class="gallery-item ${item.visible ? '' : 'gallery-item-hidden'}" data-id="${this.esc(item.id)}">
         <img
-          src="${this.esc(item.public_url)}"
+          src="${this.esc(this.safeUrl(item.public_url))}"
           alt="${this.esc(item.alt_text || 'Gallery image')}"
           loading="lazy" />
         <div class="gallery-item-controls">
@@ -647,7 +647,7 @@ class FloralynAdmin {
 
   openGalleryEditModal(item) {
     document.getElementById('gallery-edit-id').value    = item.id;
-    document.getElementById('gallery-edit-preview').src = item.public_url;
+    document.getElementById('gallery-edit-preview').src = this.safeUrl(item.public_url);
     document.getElementById('gallery-edit-alt').value   = item.alt_text || '';
     document.getElementById('gallery-edit-title').value = item.title || '';
     this.openModal('gallery-modal-overlay');
@@ -1083,6 +1083,15 @@ class FloralynAdmin {
   }
 
   // ── Utilities ───────────────────────────────────────────────────
+  safeUrl(url) {
+    const s = String(url || '').trim();
+    return /^https:\/\//i.test(s) ? s : '';
+  }
+
+  safeTel(phone) {
+    return String(phone || '').replace(/[^\d+]/g, '');
+  }
+
   esc(str) {
     if (str == null) return '';
     return String(str)

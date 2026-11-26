@@ -20,17 +20,24 @@ document.addEventListener('DOMContentLoaded', () => {
   initForm();
 });
 
+function storageGet(store, key) {
+  try { return store.getItem(key); } catch (_) { return null; }
+}
+function storageSet(store, key, val) {
+  try { store.setItem(key, val); } catch (_) {}
+}
+
 /* ── Theme (dark / light) ────────────────────────────────────── */
 function initTheme() {
   const cb = document.getElementById('dm');
   if (!cb) return;
-  const stored = localStorage.getItem('flTheme');
+  const stored = storageGet(localStorage, 'flTheme');
   const dark   = stored ? stored === 'dark'
                         : window.matchMedia('(prefers-color-scheme: dark)').matches;
   if (dark) { document.body.classList.add('dark'); cb.checked = true; }
   cb.addEventListener('change', () => {
     document.body.classList.toggle('dark', cb.checked);
-    localStorage.setItem('flTheme', cb.checked ? 'dark' : 'light');
+    storageSet(localStorage, 'flTheme', cb.checked ? 'dark' : 'light');
   });
 }
 
@@ -460,8 +467,6 @@ function initForm() {
       if (r.ok) {
         const d = await r.json().catch(() => ({}));
         if (d.ok) ok = true;
-        if (d.emailErr)  console.warn('[Email]', d.emailErr);
-        if (d.tgErr)     console.warn('[Telegram]', d.tgErr);
       }
     } catch (err) { console.error('[fetch]', err); }
 
@@ -482,7 +487,7 @@ function initIntro() {
   if (!el) return;
 
   // Skip on repeat visits within same session
-  if (sessionStorage.getItem('flIntro')) {
+  if (storageGet(sessionStorage, 'flIntro')) {
     el.style.display = 'none';
     el.remove();
     // Count-up must still fire even when intro is skipped
@@ -501,7 +506,7 @@ function initIntro() {
     setTimeout(() => {
       el.remove();
       document.body.style.overflow = '';
-      sessionStorage.setItem('flIntro', '1');
+      storageSet(sessionStorage, 'flIntro', '1');
       initCountUp();
     }, EXIT_MS);
   }, SHOW_MS);
@@ -545,8 +550,8 @@ async function initSiteSettings() {
         if (t1) t1.textContent = txt;
         if (t2) t2.textContent = txt;
         if (t3) t3.textContent = txt;
-        if (b.bg)        wrap.style.background = String(b.bg).slice(0,20);
-        if (b.textColor) wrap.style.color      = String(b.textColor).slice(0,20);
+        if (/^#[0-9a-f]{3,8}$/i.test(String(b.bg || ''))) wrap.style.background = String(b.bg);
+        if (/^#[0-9a-f]{3,8}$/i.test(String(b.textColor || ''))) wrap.style.color = String(b.textColor);
         wrap.style.display = '';
         document.body.classList.add('has-banner');
       }

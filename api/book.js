@@ -20,10 +20,24 @@ function isRateLimited(ip) {
   return false;
 }
 
+function getClientIp(req) {
+  const raw = req.headers['x-vercel-forwarded-for']
+    || req.headers['x-real-ip']
+    || req.headers['x-forwarded-for']
+    || req.socket?.remoteAddress
+    || 'unknown';
+  return String(raw).split(',')[0].trim();
+}
+
 // ── Sanitise & Escape ─────────────────────────────────────────
 function san(v, max = 2000) {
   if (typeof v !== 'string') return '';
   return v.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '').trim().slice(0, max);
+}
+
+// Single-line sanitiser (strips CR/LF/TAB to prevent header/subject injection)
+function sanLine(v, max = 120) {
+  return san(v, max).replace(/[\r\n\t]+/g, ' ').trim();
 }
 
 function escHtml(v) {
@@ -79,8 +93,36 @@ function buildEmail(d) {
 </body></html>`;
 }
 
+// ── Parse human-readable date to ISO (timezone-safe) ──────────
+function parseDisplayDate(str) {
+  if (!str) return null;
+  const trimmed = String(str).trim();
+  let y, m, d;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+    [y, m, d] = trimmed.split('-').map(Number);
+  } else {
+    const MONTHS = { jan:1, feb:2, mar:3, apr:4, may:5, jun:6, jul:7, aug:8, sep:9, oct:10, nov:11, dec:12 };
+    const match = trimmed.match(/(\d{1,2})\s+([A-Za-z]{3})\s+(\d{4})/);
+    if (!match) return null;
+    d = parseInt(match[1], 10);
+    m = MONTHS[match[2].toLowerCase()];
+    y = parseInt(match[3], 10);
+  }
+  if (!y || !m || !d) return null;
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  if (dt.getUTCFullYear() !== y || dt.getUTCMonth() !== m - 1 || dt.getUTCDate() !== d) return null;
+  const todayUtc = new Date();
+  const minUtc = Date.UTC(todayUtc.getUTCFullYear(), todayUtc.getUTCMonth(), todayUtc.getUTCDate() - 1);
+  const maxUtc = Date.UTC(todayUtc.getUTCFullYear(), todayUtc.getUTCMonth(), todayUtc.getUTCDate() + 180);
+  if (dt.getTime() < minUtc || dt.getTime() > maxUtc) return null;
+  return `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+}
+
 // ── Main handler ──────────────────────────────────────────────
 module.exports = async function handler(req, res) {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+
   // CORS
   const origin  = req.headers.origin || '';
   const allowed = process.env.ALLOWED_ORIGIN || 'https://floralyn-nails.vercel.app';
@@ -92,9 +134,15 @@ module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   if (req.method === 'OPTIONS') return res.status(204).end();
   if (req.method !== 'POST')   return res.status(405).json({ error: 'Method not allowed.' });
+  if (origin && !ok)           return res.status(403).json({ error: 'Origin not allowed.' });
+
+  const ctype = String(req.headers['content-type'] || '').toLowerCase();
+  if (!ctype.includes('application/json')) {
+    return res.status(415).json({ error: 'Content-Type must be application/json.' });
+  }
 
   // Rate limit
-  const ip = (req.headers['x-forwarded-for'] || req.socket?.remoteAddress || 'unknown').split(',')[0].trim();
+  const ip = getClientIp(req);
   if (isRateLimited(ip)) return res.status(429).json({ error: 'Too many requests. Try again in 10 minutes.' });
 
   // Parse body
@@ -103,55 +151,44 @@ module.exports = async function handler(req, res) {
     if (req.body) {
       body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
     } else {
-      const raw = await new Promise((res, rej) => {
+      const raw = await new Promise((resolve, reject) => {
         let s = '';
-        req.on('data', c => { s += c; if (s.length > 16384) rej(new Error('Too large')); });
-        req.on('end', () => res(s));
-        req.on('error', rej);
+        req.on('data', c => { s += c; if (s.length > 16384) reject(new Error('Too large')); });
+        req.on('end', () => resolve(s));
+        req.on('error', reject);
       });
       body = JSON.parse(raw);
     }
   } catch { return res.status(400).json({ error: 'Invalid request body.' }); }
 
-  if (!body || typeof body !== 'object') return res.status(400).json({ error: 'Invalid body.' });
+  if (!body || typeof body !== 'object' || Array.isArray(body)) {
+    return res.status(400).json({ error: 'Invalid body.' });
+  }
 
   // Honeypot
   if (body._h) return res.status(200).json({ ok: true });
 
   // Validate
-  const from_name = san(body.from_name, 120);
-  const phone     = san(body.phone, 24);
-  const date      = san(body.date, 60);
-  const time      = san(body.time, 30);
-  const service   = san(body.service || '', 60);
+  const from_name = sanLine(body.from_name, 100);
+  const phone     = sanLine(body.phone, 24);
+  const date      = sanLine(body.date, 60);
+  const time      = sanLine(body.time, 30);
+  const service   = sanLine(body.service || '', 60);
   const message   = san(body.message || '', 800);
 
-  if (!from_name) return res.status(400).json({ error: 'Name is required.' });
-  if (!phone)     return res.status(400).json({ error: 'Phone is required.' });
+  if (!from_name || from_name.length < 2) return res.status(400).json({ error: 'Valid name is required.' });
+  if (!phone || !/^[\d\s+\-().]{7,20}$/.test(phone)) return res.status(400).json({ error: 'Valid phone number is required.' });
   if (!date)      return res.status(400).json({ error: 'Date is required.' });
   if (!time)      return res.status(400).json({ error: 'Time is required.' });
+
+  const isoDate = parseDisplayDate(date);
+  if (!isoDate) return res.status(400).json({ error: 'Invalid appointment date.' });
 
   const normSvc = [...SERVICES].find(s => s.toLowerCase() === service.toLowerCase()) || 'Custom Design';
   if (!SERVICES.has(normSvc)) return res.status(400).json({ error: 'Invalid service.' });
 
   const data = { from_name, phone, date, time, service: normSvc, message };
-  const out  = { ok: true, saved: false, email: false, emailErr: null, telegram: false, tgErr: null };
-
-  // ── Parse human-readable date to ISO (timezone-safe, e.g. "Tue, 25 Nov 2026" → "2026-11-25") ──
-  function parseDisplayDate(str) {
-    if (!str) return null;
-    const trimmed = String(str).trim();
-    if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return trimmed;
-    const MONTHS = { jan:'01', feb:'02', mar:'03', apr:'04', may:'05', jun:'06', jul:'07', aug:'08', sep:'09', oct:'10', nov:'11', dec:'12' };
-    const m = trimmed.match(/(\d{1,2})\s+([A-Za-z]{3})\s+(\d{4})/);
-    if (m) {
-      const mon = MONTHS[m[2].toLowerCase()];
-      if (mon) return `${m[3]}-${mon}-${m[1].padStart(2, '0')}`;
-    }
-    return null;
-  }
-  const isoDate = parseDisplayDate(date);
-  if (!isoDate) return res.status(400).json({ error: 'Invalid appointment date.' });
+  const out  = { ok: true, saved: false, email: false, telegram: false };
 
   // ── 1. Supabase ───────────────────────────────────────────────
   const sbUrl = process.env.SUPABASE_URL;
@@ -181,9 +218,9 @@ module.exports = async function handler(req, res) {
         subject: `New Booking: ${from_name} — ${normSvc} · ${date}`,
         html:    buildEmail(data),
       });
-      if (r.error) { out.emailErr = r.error.message; console.error('[Resend]', r.error); }
+      if (r.error) console.error('[Resend]', r.error);
       else out.email = true;
-    } catch (e) { out.emailErr = e.message; console.error('[Resend]', e.message); }
+    } catch (e) { console.error('[Resend]', e.message); }
   }
 
   // ── 3. Telegram (multi-recipient, comma-separated chat IDs) ───
@@ -214,7 +251,6 @@ module.exports = async function handler(req, res) {
     );
     const sent = await Promise.all(sends);
     out.telegram = sent.some(Boolean);
-    if (!out.telegram) out.tgErr = 'All recipients failed';
   }
 
   return res.status(200).json(out);
