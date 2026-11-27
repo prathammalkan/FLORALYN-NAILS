@@ -2156,9 +2156,13 @@ body.has-banner #intro { top: 38px; }
     transition: none;
   }
 
-  .anim-1, .anim-2, .anim-3, .anim-4, .anim-5 {
+  .anim-1, .anim-2, .anim-3, .anim-4, .anim-5,
+  .hl, .hero-kicker, .hero-sub, .hero-ctas-anim, .hero-stats,
+  .hero-photo-img, .hero-chip, .hero-badge, .hero-scroll {
     animation: none;
     opacity: 1;
+    clip-path: none;
+    transform: none;
   }
 
   .marquee-track {
@@ -2167,9 +2171,5 @@ body.has-banner #intro { top: 38px; }
 
   .float-btn {
     transition: none;
-  }
-
-  .hero-badge {
-    animation: none;
   }
 }
