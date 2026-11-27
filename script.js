@@ -611,7 +611,7 @@ function initForm() {
   function setLoading(on) {
     if (!sbtn) return;
     sbtn.disabled = on;
-    sbtn.textContent = on ? 'Sending Request… 🌸' : 'Send Appointment Request ✦';
+    sbtn.textContent = on ? 'Sending Request… 🌸' : 'Send Request ✦';
   }
 
   function goTo(n, back = false) {
