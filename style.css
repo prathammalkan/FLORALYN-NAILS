@@ -1171,9 +1171,12 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   display: flex; align-items: center; gap: 8px;
   min-height: 44px; padding: 8px 10px; border-radius: 12px;
   background: var(--surf); border: 1.5px solid var(--border);
-  font-size: 12px; font-weight: 500; color: var(--text);
+  font-size: 12px; font-weight: 500; color: var(--text); text-align: left;
   transition: border-color .18s, background .18s, transform .15s;
 }
+.pot-copy { display: flex; flex-direction: column; min-width: 0; line-height: 1.2; }
+.pot-copy span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pot-note { font-size: 10px; color: var(--rose); font-weight: 600; margin-top: 2px; }
 .vc-pot:hover { border-color: var(--rose); }
 .vc-pot.act { border-color: var(--rose); background: var(--rose-lt); font-weight: 600; }
 .pot-gem {

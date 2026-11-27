@@ -17,13 +17,8 @@ CREATE TABLE IF NOT EXISTS appointments (
   instagram       TEXT        CHECK (char_length(instagram) <= 60),
   email           TEXT        CHECK (char_length(email) <= 200),
   preferred_date  DATE        NOT NULL,
-  preferred_time  TEXT        NOT NULL CHECK (char_length(preferred_time) <= 20),
-  service         TEXT        NOT NULL CHECK (service IN (
-                    'Simple Manicure',
-                    'Gel Nails',
-                    'Custom Design',
-                    'Bridal / Special Occasion'
-                  )),
+  preferred_time  TEXT        NOT NULL CHECK (char_length(preferred_time) <= 30),
+  service         TEXT        NOT NULL CHECK (char_length(service) BETWEEN 2 AND 100),
   message         TEXT        CHECK (char_length(message) <= 1000),
   status          TEXT        NOT NULL DEFAULT 'PENDING' CHECK (status IN (
                     'PENDING', 'CONFIRMED', 'DECLINED', 'COMPLETED', 'CANCELLED'
@@ -244,13 +239,21 @@ INSERT INTO settings (key, value) VALUES
     "textColor": "#ffffff"
   }'),
   ('services_display', '{
-    "Simple Manicure":           {"price": "from ₹300", "duration": "~45 min", "tag": ""},
-    "Gel Nails":                 {"price": "from ₹700", "duration": "~60 min", "tag": ""},
-    "Custom Design":             {"price": "from ₹1,200", "duration": "~90 min", "tag": "Most Booked"},
-    "Bridal / Special Occasion": {"price": "from ₹2,000", "duration": "~2 hrs", "tag": ""}
+    "Simple Manicure":           {"price": "from ₹300", "duration": "~45 min", "tag": "", "icon": "🌸"},
+    "Gel Nails":                 {"price": "from ₹700", "duration": "~60 min", "tag": "", "icon": "✨"},
+    "Custom Design":             {"price": "from ₹1,200", "duration": "~90 min", "tag": "Signature Atelier", "icon": "🎨", "featured": true},
+    "Bridal / Special Occasion": {"price": "from ₹2,000", "duration": "~2 hrs", "tag": "", "icon": "💍"}
   }'),
   ('hero', '{
-    "kicker": "Jetpur'\''s Favourite Nail Studio · Book Your Slot",
-    "subtext": "Gel nails, custom art & dreamy bridal sets — all handcrafted just for you. Serving Jetpur, Gujarat and nearby."
+    "kicker": "Jetpur · Private 1-on-1 Nail Atelier",
+    "line1": "Every nail,",
+    "accent": "love letter",
+    "line3": "painted by hand.",
+    "subtext": "An intimate nail artistry studio in Jetpur where soft sheer jellies, botanical micro-florals, and bridal pearl chromes come to life slowly over your natural nails.",
+    "booking_note": "Send your preferred date & mood — I personally review and confirm every slot within 24 hours."
   }')
 ON CONFLICT (key) DO NOTHING;
+
+-- Optional migration for existing live databases to unlock adding/renaming services beyond the original 4 names:
+-- ALTER TABLE appointments DROP CONSTRAINT IF EXISTS appointments_service_check;
+-- ALTER TABLE appointments ADD CONSTRAINT appointments_service_len_check CHECK (char_length(service) BETWEEN 2 AND 100);

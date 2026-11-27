@@ -113,7 +113,9 @@ class FloralynAdmin {
       dashboard:    'Dashboard',
       appointments: 'Appointments',
       gallery:      'Gallery',
-      services:     'Services',
+      services:     'Services & Prices',
+      content:      'Shades, Hero & FAQ',
+      promotions:   'Offer Banner',
       settings:     'Settings',
       audit:        'Audit Log',
       preview:      'Preview',
@@ -126,6 +128,8 @@ class FloralynAdmin {
       appointments: () => this.loadAppointments(),
       gallery:      () => this.loadGallery(),
       services:     () => this.loadServices(),
+      content:      () => this.loadSiteContent(),
+      promotions:   () => this.loadPromotions(),
       settings:     () => this.loadSettings(),
       audit:        () => this.loadAuditLog(),
       preview:      () => this.loadPreview(),
@@ -440,8 +444,12 @@ class FloralynAdmin {
 
     container.innerHTML = `<div class="empty-state"><div class="empty-icon">⏳</div><p>Loading gallery…</p></div>`;
 
-    const { data, error } = await this.db
-      .from('gallery').select('*').order('sort_order', { ascending: true });
+    const [{ data, error }, metaRes] = await Promise.all([
+      this.db.from('gallery').select('*').order('sort_order', { ascending: true }),
+      this.db.from('settings').select('value').eq('key', 'gallery_meta').maybeSingle(),
+    ]);
+
+    this._galleryMeta = metaRes?.data?.value || {};
 
     if (error) {
       container.innerHTML = `<p style="color:var(--danger)">Failed to load gallery.</p>`;
@@ -453,14 +461,22 @@ class FloralynAdmin {
       return;
     }
 
-    container.innerHTML = data.map((item, idx) => `
+    const catLabels = { studio: 'Real Chair Sets', floral: 'Florals & Velvet', bridal: 'Bridal & Minimal' };
+    container.innerHTML = data.map((item, idx) => {
+      const meta = this._galleryMeta[item.id] || {};
+      const catTag = catLabels[meta.category] || 'Studio Set';
+      return `
       <div class="gallery-item ${item.visible ? '' : 'gallery-item-hidden'}" data-id="${this.esc(item.id)}">
         <img
           src="${this.esc(this.safeUrl(item.public_url))}"
           alt="${this.esc(item.alt_text || 'Gallery image')}"
           loading="lazy" />
+        <div style="padding:8px 10px 0;font-size:11px;color:var(--text-secondary)">
+          <div style="font-weight:600;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${this.esc(item.title || 'Untitled Look')}</div>
+          <div style="font-size:10px;color:var(--text-muted)">${this.esc(catTag)}</div>
+        </div>
         <div class="gallery-item-controls">
-          <button class="btn-edit-gallery" data-id="${this.esc(item.id)}" title="Edit alt text and title">✏️ Edit</button>
+          <button class="btn-edit-gallery" data-id="${this.esc(item.id)}" title="Edit title, category and alt text">✏️ Edit</button>
           <button class="btn-move-up" data-id="${this.esc(item.id)}" data-idx="${idx}" title="Move up" ${idx === 0 ? 'disabled' : ''}>↑</button>
           <button class="btn-move-dn" data-id="${this.esc(item.id)}" data-idx="${idx}" title="Move down" ${idx === data.length - 1 ? 'disabled' : ''}>↓</button>
           <button class="btn-toggle-gallery" data-id="${this.esc(item.id)}" data-visible="${item.visible}" title="${item.visible ? 'Hide' : 'Show'}">
@@ -468,7 +484,8 @@ class FloralynAdmin {
           </button>
           <button class="btn-del btn-del-gallery" data-id="${this.esc(item.id)}" title="Delete photo">🗑️</button>
         </div>
-      </div>`).join('');
+      </div>`;
+    }).join('');
 
     container.querySelectorAll('.btn-edit-gallery').forEach(btn => {
       btn.addEventListener('click', (e) => {
@@ -646,10 +663,15 @@ class FloralynAdmin {
   }
 
   openGalleryEditModal(item) {
+    const meta = (this._galleryMeta || {})[item.id] || {};
     document.getElementById('gallery-edit-id').value    = item.id;
     document.getElementById('gallery-edit-preview').src = this.safeUrl(item.public_url);
     document.getElementById('gallery-edit-alt').value   = item.alt_text || '';
     document.getElementById('gallery-edit-title').value = item.title || '';
+    const techEl = document.getElementById('gallery-edit-tech');
+    if (techEl) techEl.value = meta.tech || '';
+    const catEl = document.getElementById('gallery-edit-cat');
+    if (catEl) catEl.value = meta.category || 'studio';
     this.openModal('gallery-modal-overlay');
   }
 
@@ -680,10 +702,15 @@ class FloralynAdmin {
     await this.loadGallery();
   }
 
-  // ── Services ────────────────────────────────────────────────────
+  // ── Services & Prices (Unified CRUD + Display Metadata) ─────────
   async loadServices() {
-    const { data, error } = await this.db
-      .from('services').select('*').order('sort_order', { ascending: true });
+    const [{ data, error }, dispRes] = await Promise.all([
+      this.db.from('services').select('*').order('sort_order', { ascending: true }),
+      this.db.from('settings').select('value').eq('key', 'services_display').maybeSingle(),
+    ]);
+
+    this._servicesDisplay = dispRes?.data?.value || {};
+    this._servicesList    = data || [];
 
     const container = document.getElementById('services-list');
     if (!container) return;
@@ -698,27 +725,71 @@ class FloralynAdmin {
       return;
     }
 
-    container.innerHTML = data.map(s => `
+    container.innerHTML = data.map((s, idx) => {
+      const m = this._servicesDisplay[s.id] || this._servicesDisplay[s.name] || {};
+      const includesHtml = Array.isArray(m.includes) && m.includes.length
+        ? m.includes.map(tag => `<span class="svc-chip-dur">${this.esc(tag)}</span>`).join('')
+        : '';
+      return `
       <div class="service-card ${s.enabled ? '' : 'disabled'}" data-id="${this.esc(s.id)}">
         <label class="toggle-switch" title="${s.enabled ? 'Disable service' : 'Enable service'}">
           <input type="checkbox" class="service-toggle" data-id="${this.esc(s.id)}" ${s.enabled ? 'checked' : ''} aria-label="Enable ${this.esc(s.name)}" />
           <span class="toggle-slider"></span>
         </label>
         <div class="service-info">
-          <div class="service-name">${this.esc(s.name)}</div>
+          <div class="service-name">
+            <span>${this.esc(m.icon || '💅')}</span>
+            <span>${this.esc(s.name)}</span>
+            ${m.tag ? `<span class="svc-chip-tag">${this.esc(m.tag)}</span>` : ''}
+            ${m.featured ? `<span class="svc-chip-tag" style="background:#fef3c7;color:#92400e">★ Featured</span>` : ''}
+          </div>
           ${s.description ? `<div class="service-desc">${this.esc(s.description)}</div>` : ''}
+          <div class="service-meta-chips">
+            ${m.price ? `<span class="svc-chip-price">${this.esc(m.price)}</span>` : '<span class="svc-chip-dur">Price not set</span>'}
+            ${m.duration ? `<span class="svc-chip-dur">⏱ ${this.esc(m.duration)}</span>` : ''}
+            ${includesHtml}
+          </div>
         </div>
         <div class="service-actions">
+          <button class="btn-secondary btn-svc-up" data-idx="${idx}" title="Move up" ${idx === 0 ? 'disabled' : ''} style="font-size:12px;padding:6px 10px;">↑</button>
+          <button class="btn-secondary btn-svc-dn" data-idx="${idx}" title="Move down" ${idx === data.length - 1 ? 'disabled' : ''} style="font-size:12px;padding:6px 10px;">↓</button>
           <button class="btn-secondary btn-edit-service" data-id="${this.esc(s.id)}" style="font-size:12px;padding:6px 12px;">✏️ Edit</button>
           <button class="btn-secondary btn-del-service" data-id="${this.esc(s.id)}" style="font-size:12px;padding:6px 12px;color:var(--danger);border-color:var(--danger)">🗑️</button>
         </div>
-      </div>`).join('');
+      </div>`;
+    }).join('');
 
     container.querySelectorAll('.service-toggle').forEach(toggle => {
       toggle.addEventListener('change', async () => {
         await this.db.from('services').update({ enabled: toggle.checked }).eq('id', toggle.dataset.id);
         await this.audit('SERVICE_TOGGLE', 'service', toggle.dataset.id, { enabled: toggle.checked });
         this.toast(`Service ${toggle.checked ? 'enabled' : 'disabled'}.`, 'success');
+        await this.loadServices();
+      });
+    });
+
+    container.querySelectorAll('.btn-svc-up').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const idx = parseInt(btn.dataset.idx, 10);
+        if (idx <= 0) return;
+        const curr = data[idx], prev = data[idx - 1];
+        await Promise.all([
+          this.db.from('services').update({ sort_order: prev.sort_order }).eq('id', curr.id),
+          this.db.from('services').update({ sort_order: curr.sort_order }).eq('id', prev.id),
+        ]);
+        await this.loadServices();
+      });
+    });
+
+    container.querySelectorAll('.btn-svc-dn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const idx = parseInt(btn.dataset.idx, 10);
+        if (idx >= data.length - 1) return;
+        const curr = data[idx], next = data[idx + 1];
+        await Promise.all([
+          this.db.from('services').update({ sort_order: next.sort_order }).eq('id', curr.id),
+          this.db.from('services').update({ sort_order: curr.sort_order }).eq('id', next.id),
+        ]);
         await this.loadServices();
       });
     });
@@ -737,26 +808,48 @@ class FloralynAdmin {
       });
     });
 
-    document.getElementById('add-service-btn')?.addEventListener('click', () => {
-      this.openServiceModal(null);
-    });
+    const addSvcBtn = document.getElementById('add-service-btn');
+    if (addSvcBtn && !addSvcBtn._bound) {
+      addSvcBtn._bound = true;
+      addSvcBtn.addEventListener('click', () => this.openServiceModal(null));
+    }
   }
 
   openServiceModal(service) {
-    document.getElementById('service-edit-id').value   = service?.id || '';
-    document.getElementById('service-edit-name').value = service?.name || '';
-    document.getElementById('service-edit-desc').value = service?.description || '';
-    document.getElementById('service-modal-title').textContent = service ? 'Edit Service' : 'Add Service';
+    const DEFAULTS = {
+      'Simple Manicure': { price: 'from ₹300', duration: '~45 min', tag: '', icon: '🌸', featured: false, includes: ['Cuticle Ritual', 'Shaping', 'Classic Gloss'] },
+      'Gel Nails': { price: 'from ₹700', duration: '~60 min', tag: '', icon: '✨', featured: false, includes: ['Natural Builder', '2–4 Wk Wear', 'Glaze / Ombre'] },
+      'Custom Design': { price: 'from ₹1,200', duration: '~90 min', tag: 'Signature Atelier', icon: '🎨', featured: true, includes: ['100% Freehand', '3D / Velvet Art', 'Mood Consultation'] },
+      'Bridal / Special Occasion': { price: 'from ₹2,000', duration: '~2 hrs', tag: '', icon: '💍', featured: false, includes: ['Outfit Matching', 'Micro-Pearls & Foil', 'Private Prep'] },
+    };
+    const def = service ? (DEFAULTS[service.name] || {}) : {};
+    const m   = service ? ((this._servicesDisplay || {})[service.id] || (this._servicesDisplay || {})[service.name] || {}) : {};
+    const inc = Array.isArray(m.includes) && m.includes.length ? m.includes : (def.includes || []);
+    document.getElementById('service-edit-id').value         = service?.id || '';
+    document.getElementById('service-edit-name').value       = service?.name || '';
+    document.getElementById('service-edit-desc').value       = service?.description || m.description || '';
+    document.getElementById('service-edit-price').value      = m.price || def.price || '';
+    document.getElementById('service-edit-dur').value        = m.duration || def.duration || '';
+    document.getElementById('service-edit-tag').value        = m.tag !== undefined ? m.tag : (def.tag || '');
+    document.getElementById('service-edit-icon').value       = m.icon || def.icon || '💅';
+    document.getElementById('service-edit-includes').value   = inc.join(', ');
+    document.getElementById('service-edit-featured').checked = m.featured !== undefined ? Boolean(m.featured) : Boolean(def.featured);
+    document.getElementById('service-modal-title').textContent = service ? 'Edit Service & Price' : 'Add New Service';
     this.openModal('service-modal-overlay');
   }
 
   async deleteService(s) {
     const confirmed = await this.confirm(
-      `Delete "${s.name}"? This will remove it from the booking form.`,
+      `Delete "${s.name}"? This will remove it from both the Service Menu and booking form.`,
       'Delete Service', true
     );
     if (!confirmed) return;
     await this.db.from('services').delete().eq('id', s.id);
+    if (this._servicesDisplay) {
+      delete this._servicesDisplay[s.id];
+      delete this._servicesDisplay[s.name];
+      await this.db.from('settings').upsert([{ key: 'services_display', value: this._servicesDisplay }], { onConflict: 'key' });
+    }
     await this.audit('DELETE_SERVICE', 'service', s.id, { name: s.name });
     this.toast('Service deleted.', 'success');
     await this.loadServices();
@@ -776,10 +869,15 @@ class FloralynAdmin {
     const timeslots = data.find(r => r.key === 'timeslots')?.value || [];
 
     // Business info
-    this.setVal('s-name',      biz.name      || '');
-    this.setVal('s-email',     biz.email     || '');
-    this.setVal('s-instagram', biz.instagram || '');
-    this.setVal('s-phone',     biz.phone     || '');
+    this.setVal('s-name',        biz.name        || 'Floralyn');
+    this.setVal('s-email',       biz.email       || 'floralyyn7@gmail.com');
+    this.setVal('s-instagram',   biz.instagram   || 'https://www.instagram.com/floralyn_nails_07');
+    this.setVal('s-phone',       biz.phone       || '');
+    this.setVal('s-location',    biz.location    || 'Jetpur, Gujarat · 360370');
+    this.setVal('s-hours-text',  biz.hours_text  || 'Mon – Sat · 10 AM – 7 PM');
+    this.setVal('s-closed-note', biz.closed_note || 'Closed Sundays · Appointment Only');
+    const showPhoneCb = document.getElementById('s-show-phone');
+    if (showPhoneCb) showPhoneCb.checked = Boolean(biz.show_phone);
 
     // Booking rules
     this.setVal('s-min-days', booking.advance_days_min     ?? 1);
@@ -858,15 +956,21 @@ class FloralynAdmin {
       const strip = str => str.replace(/<[^>]*>/g, '').trim();
 
       const bizData = {
-        name:      strip(this.getVal('s-name')),
-        email:     strip(this.getVal('s-email')),
-        instagram: strip(this.getVal('s-instagram')),
-        phone:     strip(this.getVal('s-phone')),
+        name:        strip(this.getVal('s-name')),
+        email:       strip(this.getVal('s-email')),
+        instagram:   strip(this.getVal('s-instagram')),
+        phone:       strip(this.getVal('s-phone')),
+        location:    strip(this.getVal('s-location')),
+        hours_text:  strip(this.getVal('s-hours-text')),
+        closed_note: strip(this.getVal('s-closed-note')),
+        show_phone:  Boolean(document.getElementById('s-show-phone')?.checked),
       };
 
+      const minRaw = parseInt(this.getVal('s-min-days'), 10);
+      const maxRaw = parseInt(this.getVal('s-max-days'), 10);
       const bookingData = {
-        advance_days_min:     parseInt(this.getVal('s-min-days'), 10)  || 1,
-        advance_days_max:     parseInt(this.getVal('s-max-days'), 10)  || 90,
+        advance_days_min:     Number.isFinite(minRaw) ? Math.max(0, Math.min(30, minRaw)) : 1,
+        advance_days_max:     Number.isFinite(maxRaw) ? Math.max(1, Math.min(365, maxRaw)) : 90,
         business_hours_start: this.getVal('s-open'),
         business_hours_end:   this.getVal('s-close'),
         closed_days:          this._collectClosedDays(),
@@ -1016,22 +1120,42 @@ class FloralynAdmin {
     const id   = document.getElementById('service-edit-id').value;
     const name = document.getElementById('service-edit-name').value.trim().slice(0, 100);
     const desc = document.getElementById('service-edit-desc').value.trim().slice(0, 500);
+    const price = (document.getElementById('service-edit-price')?.value || '').trim().slice(0, 40);
+    const dur   = (document.getElementById('service-edit-dur')?.value   || '').trim().slice(0, 24);
+    const tag   = (document.getElementById('service-edit-tag')?.value   || '').trim().slice(0, 32);
+    const icon  = (document.getElementById('service-edit-icon')?.value  || '').trim().slice(0, 8) || '💅';
+    const featured = Boolean(document.getElementById('service-edit-featured')?.checked);
+    const includes = (document.getElementById('service-edit-includes')?.value || '')
+      .split(',').map(s => s.trim()).filter(Boolean).slice(0, 4);
 
     if (!name || name.length < 2) { this.toast('Service name must be 2–100 characters.', 'error'); return; }
 
+    let savedId = id;
+    let prevName = '';
     if (id) {
+      prevName = (this._servicesList || []).find(x => x.id === id)?.name || '';
       const { error } = await this.db.from('services').update({ name, description: desc || null }).eq('id', id);
       if (error) { this.toast(`Update failed: ${error.message}`, 'error'); return; }
-      await this.audit('UPDATE_SERVICE', 'service', id, { name });
+      await this.audit('UPDATE_SERVICE', 'service', id, { name, price });
       this.toast('Service updated.', 'success');
     } else {
       const { data, error } = await this.db.from('services')
         .insert({ name, description: desc || null, enabled: true, sort_order: Date.now() })
         .select('id').single();
       if (error) { this.toast(`Create failed: ${error.message}`, 'error'); return; }
-      await this.audit('CREATE_SERVICE', 'service', data?.id, { name });
+      savedId = data?.id;
+      await this.audit('CREATE_SERVICE', 'service', savedId, { name, price });
       this.toast('Service created.', 'success');
     }
+
+    // Persist unified pricing, duration, badge, icon & highlights into settings.services_display
+    const disp = { ...(this._servicesDisplay || {}) };
+    if (prevName && prevName !== name) delete disp[prevName];
+    const metaObj = { price, duration: dur, tag, icon, includes, featured, description: desc };
+    if (savedId) disp[savedId] = metaObj;
+    disp[name] = metaObj;
+    this._servicesDisplay = disp;
+    await this.db.from('settings').upsert([{ key: 'services_display', value: disp }], { onConflict: 'key' });
 
     this.closeModal('service-modal-overlay');
     await this.loadServices();
@@ -1041,12 +1165,20 @@ class FloralynAdmin {
     const id    = document.getElementById('gallery-edit-id').value;
     const alt   = document.getElementById('gallery-edit-alt').value.trim().slice(0, 200);
     const title = document.getElementById('gallery-edit-title').value.trim().slice(0, 100);
+    const tech  = (document.getElementById('gallery-edit-tech')?.value || '').trim().slice(0, 100);
+    const cat   = document.getElementById('gallery-edit-cat')?.value || 'studio';
 
     if (!alt) { this.toast('Alt text is required for accessibility.', 'error'); return; }
 
     const { error } = await this.db.from('gallery').update({ alt_text: alt, title: title || null }).eq('id', id);
     if (error) { this.toast(`Save failed: ${error.message}`, 'error'); return; }
-    await this.audit('UPDATE_GALLERY', 'gallery', id, { alt_text: alt });
+
+    const meta = { ...(this._galleryMeta || {}) };
+    meta[id] = { category: cat, tech };
+    this._galleryMeta = meta;
+    await this.db.from('settings').upsert([{ key: 'gallery_meta', value: meta }], { onConflict: 'key' });
+
+    await this.audit('UPDATE_GALLERY', 'gallery', id, { alt_text: alt, category: cat });
     this.toast('Photo updated.', 'success');
     this.closeModal('gallery-modal-overlay');
     await this.loadGallery();
@@ -1139,50 +1271,190 @@ document.addEventListener('DOMContentLoaded', () => {
    via prototype after class definition)
    ═══════════════════════════════════════════════════════════════ */
 
-// Patch loadView to include promotions
-(function patchLoadView() {
-  const _orig = FloralynAdmin.prototype.loadView;
-  FloralynAdmin.prototype.loadView = async function(view) {
-    await _orig.call(this, view);
-    if (view === 'promotions') await this.loadPromotions();
-  };
-
-  // Update titles map
-  const _origCheck = FloralynAdmin.prototype.checkAuth;
-  FloralynAdmin.prototype.checkAuth = async function() {
-    await _origCheck.call(this);
-  };
-})();
-
-// Fix titles map to include promotions
+// Patch loadView to handle prototype modules cleanly (now handled inside class)
 FloralynAdmin.prototype._viewTitles = {
   dashboard: 'Dashboard', appointments: 'Appointments',
   gallery: 'Gallery', services: 'Services & Prices',
-  promotions: 'Promotions', settings: 'Settings',
-  preview: 'Preview', audit: 'Audit Log',
+  content: 'Shades, Hero & FAQ', promotions: 'Offer Banner',
+  settings: 'Settings', preview: 'Preview', audit: 'Audit Log',
+};
+
+/* ═══════════════════════════════════════════════════════════════
+   SHADES, HERO & FAQ CMS MODULE (view-content)
+   ═══════════════════════════════════════════════════════════════ */
+const DEFAULT_SHADES = [
+  { name: 'Blush Silk',        hex: '#F4BFD3', note: 'Sheer Gel' },
+  { name: 'Wild Lilac',        hex: '#B58FE0', note: 'Cat-Eye' },
+  { name: 'Bridal Ivory',      hex: '#F5EAE2', note: 'Pearl Glaze' },
+  { name: 'Mocha Foil',        hex: '#6B4539', note: 'Marble Foil' },
+  { name: 'Spiced Terracotta', hex: '#9C4436', note: 'Festive Gloss' },
+  { name: 'Rosewood',          hex: '#C86688', note: 'Jelly Tint' },
+];
+
+const DEFAULT_FAQS = [
+  { q: 'Do you accept walk-ins?', a: 'Floralyn works strictly by appointment so every client receives unhurried 1-on-1 chair attention. Please request your slot online at least 24 hours in advance.' },
+  { q: 'How long does gel nail art last?', a: 'With gentle builder reinforcement on natural nails, sets typically wear cleanly for 2–4 weeks depending on nail growth and daily care. Nightly cuticle oil helps keep flexibility high and edges chip-free.' },
+  { q: 'Can I bring Pinterest inspiration or my wedding outfit palette?', a: 'Yes — bring saved references, lehenga embroidery photos, or blend a vibe in our Studio Polish Bar above. Every set is painted freehand and scaled thoughtfully to flatter your nail bed.' },
+  { q: 'What is the price range at Floralyn?', a: 'Simple manicures start from ₹300, gel sets from ₹700, custom freehand nail art from ₹1,200, and bespoke bridal sets from ₹2,000. You receive a clear quote before your brush even touches paint.' },
+  { q: 'Do you do acrylic extensions?', a: 'Floralyn focuses exclusively on soft & builder gel artistry over your natural nails so your natural keratin stays strong, flexible, and healthy.' },
+  { q: 'How far ahead should brides or festive clients book?', a: '2–3 days ahead is ideal for everyday gel or custom sets, and 2–4 weeks prior for bridal or wedding functions so we can reserve an unhurried two-hour studio slot.' },
+];
+
+FloralynAdmin.prototype.loadSiteContent = async function() {
+  try {
+    const { data } = await this.db.from('settings').select('key, value')
+      .in('key', ['hero', 'polish_bar', 'faq']);
+    const rows = {};
+    (data || []).forEach(r => { rows[r.key] = r.value; });
+
+    const hero = rows.hero || {};
+    this.setVal('c-hero-kicker',  hero.kicker       || 'Jetpur · Private 1-on-1 Nail Atelier');
+    this.setVal('c-hero-l1',      hero.line1        || 'Every nail,');
+    this.setVal('c-hero-em',      hero.accent       || 'love letter');
+    this.setVal('c-hero-l3',      hero.line3        || 'painted by hand.');
+    this.setVal('c-hero-sub',     hero.subtext      || 'An intimate nail artistry studio in Jetpur where soft sheer jellies, botanical micro-florals, and bridal pearl chromes come to life slowly over your natural nails.');
+    this.setVal('c-booking-note', hero.booking_note || 'Send your preferred date & mood — I personally review and confirm every slot within 24 hours.');
+
+    const shades = Array.isArray(rows.polish_bar?.shades) && rows.polish_bar.shades.length
+      ? rows.polish_bar.shades
+      : DEFAULT_SHADES;
+    this._renderShadeRows(shades);
+
+    const faqs = Array.isArray(rows.faq) && rows.faq.length ? rows.faq : DEFAULT_FAQS;
+    this._renderFaqRows(faqs);
+
+    const addShade = document.getElementById('add-shade-btn');
+    if (addShade && !addShade._bound) {
+      addShade._bound = true;
+      addShade.addEventListener('click', () => this._addShadeRow({ name: '', hex: '#F4B8D0', note: '' }));
+    }
+    const addFaq = document.getElementById('add-faq-btn');
+    if (addFaq && !addFaq._bound) {
+      addFaq._bound = true;
+      addFaq.addEventListener('click', () => this._addFaqRow({ q: '', a: '' }));
+    }
+    const saveContentBtn = document.getElementById('content-save-btn');
+    if (saveContentBtn && !saveContentBtn._bound) {
+      saveContentBtn._bound = true;
+      saveContentBtn.addEventListener('click', () => this.saveSiteContent());
+    }
+  } catch (e) {
+    this.toast('Failed to load site content settings', 'error');
+  }
+};
+
+FloralynAdmin.prototype._renderShadeRows = function(shades) {
+  const ed = document.getElementById('shades-editor');
+  if (!ed) return;
+  ed.innerHTML = '';
+  shades.forEach(s => this._addShadeRow(s));
+};
+
+FloralynAdmin.prototype._addShadeRow = function(shade = { name: '', hex: '#F4B8D0', note: '' }) {
+  const ed = document.getElementById('shades-editor');
+  if (!ed) return;
+  const row = document.createElement('div');
+  row.className = 'cms-row';
+  const safeHex = /^#[0-9a-f]{6}$/i.test(shade.hex || '') ? shade.hex : '#F4B8D0';
+  row.innerHTML = `
+    <input type="color" class="sh-hex" value="${this.esc(safeHex)}" aria-label="Shade colour" />
+    <input type="text" class="sh-name" value="${this.esc(shade.name || '')}" placeholder="Shade / product name (e.g. Mint Silk)" maxlength="40" />
+    <input type="text" class="sh-note" value="${this.esc(shade.note || '')}" placeholder="Tag or price (e.g. Sheer Gel or +₹150)" maxlength="40" />
+    <button type="button" class="timeslot-del" title="Remove shade">✕</button>`;
+  row.querySelector('.timeslot-del').addEventListener('click', () => row.remove());
+  ed.appendChild(row);
+};
+
+FloralynAdmin.prototype._renderFaqRows = function(faqs) {
+  const ed = document.getElementById('faq-editor');
+  if (!ed) return;
+  ed.innerHTML = '';
+  faqs.forEach(f => this._addFaqRow(f));
+};
+
+FloralynAdmin.prototype._addFaqRow = function(item = { q: '', a: '' }) {
+  const ed = document.getElementById('faq-editor');
+  if (!ed) return;
+  const row = document.createElement('div');
+  row.className = 'cms-row faq-row';
+  row.innerHTML = `
+    <div class="faq-inputs">
+      <input type="text" class="faq-q-in" value="${this.esc(item.q || '')}" placeholder="Question (e.g. Do you do gel extensions?)" maxlength="180" />
+      <textarea class="faq-a-in" rows="2" placeholder="Clear answer shown to visitors & search engines…" maxlength="600">${this.esc(item.a || '')}</textarea>
+    </div>
+    <button type="button" class="timeslot-del" title="Remove FAQ">✕</button>`;
+  row.querySelector('.timeslot-del').addEventListener('click', () => row.remove());
+  ed.appendChild(row);
+};
+
+FloralynAdmin.prototype.saveSiteContent = async function() {
+  const btn = document.getElementById('content-save-btn');
+  const status = document.getElementById('content-status');
+  if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
+  if (status) status.textContent = '';
+
+  try {
+    const strip = s => String(s || '').replace(/<[^>]*>/g, '').trim();
+    const hero = {
+      kicker:       strip(this.getVal('c-hero-kicker')).slice(0, 100),
+      line1:        strip(this.getVal('c-hero-l1')).slice(0, 40),
+      accent:       strip(this.getVal('c-hero-em')).slice(0, 40),
+      line3:        strip(this.getVal('c-hero-l3')).slice(0, 40),
+      subtext:      strip(this.getVal('c-hero-sub')).slice(0, 260),
+      booking_note: strip(this.getVal('c-booking-note')).slice(0, 200),
+    };
+
+    const shades = Array.from(document.querySelectorAll('#shades-editor .cms-row')).map(row => ({
+      hex:  /^#[0-9a-f]{6}$/i.test(row.querySelector('.sh-hex')?.value || '') ? row.querySelector('.sh-hex').value : '#F4B8D0',
+      name: strip(row.querySelector('.sh-name')?.value).slice(0, 40),
+      note: strip(row.querySelector('.sh-note')?.value).slice(0, 40),
+    })).filter(s => s.name);
+
+    const faq = Array.from(document.querySelectorAll('#faq-editor .faq-row')).map(row => ({
+      q: strip(row.querySelector('.faq-q-in')?.value).slice(0, 180),
+      a: strip(row.querySelector('.faq-a-in')?.value).slice(0, 600),
+    })).filter(f => f.q && f.a);
+
+    const { error } = await this.db.from('settings').upsert([
+      { key: 'hero',       value: hero },
+      { key: 'polish_bar', value: { shades } },
+      { key: 'faq',        value: faq },
+    ], { onConflict: 'key' });
+
+    if (error) throw error;
+    await this.audit('CONTENT_SAVED', 'settings', 'content', { shades: shades.length, faqs: faq.length });
+    this.toast('✅ Shades, Hero & FAQs saved! Live in ~15 seconds.', 'success');
+    if (status) { status.textContent = '✅ Saved!'; setTimeout(() => { status.textContent = ''; }, 4000); }
+  } catch (e) {
+    this.toast('Failed to save content: ' + e.message, 'error');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'Save Site Content'; }
+  }
 };
 
 /* ── loadPromotions ─────────────────────────────────────────── */
 FloralynAdmin.prototype.loadPromotions = async function() {
-  const SERVICES = [
-    { key: 'Simple Manicure',           label: 'Simple Manicure' },
-    { key: 'Gel Nails',                 label: 'Gel Nails' },
-    { key: 'Custom Design',             label: 'Custom Nail Art' },
-    { key: 'Bridal / Special Occasion', label: 'Bridal & Occasions' },
+  const FALLBACK_SERVICES = [
+    { id: 'Simple Manicure',           name: 'Simple Manicure' },
+    { id: 'Gel Nails',                 name: 'Gel Nails' },
+    { id: 'Custom Design',             name: 'Custom Nail Art' },
+    { id: 'Bridal / Special Occasion', name: 'Bridal & Occasions' },
   ];
 
-  // ── Load current banner settings ──────────────────────────
   try {
-    const { data } = await this.db.from('settings').select('key, value')
-      .in('key', ['banner', 'services_display']);
+    const [{ data }, svcRes] = await Promise.all([
+      this.db.from('settings').select('key, value').in('key', ['banner', 'services_display']),
+      this.db.from('services').select('id, name').order('sort_order', { ascending: true }),
+    ]);
 
     const rows = {};
     (data || []).forEach(r => { rows[r.key] = r.value; });
 
     const b = rows.banner || {};
     const sd = rows.services_display || {};
+    this._promoServices = (!svcRes.error && Array.isArray(svcRes.data) && svcRes.data.length)
+      ? svcRes.data : FALLBACK_SERVICES;
 
-    // Populate banner fields
     const setVal = (id, val) => { const el = document.getElementById(id); if (el && val !== undefined) el.value = val; };
     const setChk = (id, val) => { const el = document.getElementById(id); if (el) el.checked = !!val; };
 
@@ -1193,38 +1465,34 @@ FloralynAdmin.prototype.loadPromotions = async function() {
     setVal('banner-color', b.textColor || '#ffffff');
     setVal('banner-color-hex', b.textColor || '#ffffff');
 
-    // Populate service display editor
     const editor = document.getElementById('service-display-editor');
     if (editor) {
-      editor.innerHTML = SERVICES.map(s => {
-        const info = sd[s.key] || {};
+      editor.innerHTML = this._promoServices.map(s => {
+        const info = sd[s.id] || sd[s.name] || {};
         return `
-          <div class="svc-display-row" data-svc-key="${this.esc(s.key)}">
-            <div class="svc-display-name">${this.esc(s.label)}</div>
+          <div class="svc-display-row" data-svc-id="${this.esc(s.id)}" data-svc-name="${this.esc(s.name)}">
+            <div class="svc-display-name">${this.esc(s.name)}</div>
             <div class="svc-display-field">
               <label>Price (e.g. "from ₹700")</label>
               <input type="text" class="svc-price-input" maxlength="40" placeholder="from ₹..." value="${this.esc(info.price || '')}" />
             </div>
             <div class="svc-display-field">
               <label>Duration (e.g. "~60 min")</label>
-              <input type="text" class="svc-dur-input" maxlength="20" placeholder="~XX min" value="${this.esc(info.duration || '')}" />
+              <input type="text" class="svc-dur-input" maxlength="24" placeholder="~XX min" value="${this.esc(info.duration || '')}" />
             </div>
             <div class="svc-display-field">
-              <label>Tag (e.g. "Most Booked")</label>
-              <input type="text" class="svc-tag-input" maxlength="30" placeholder="Optional badge" value="${this.esc(info.tag || '')}" />
+              <label>Badge Tag</label>
+              <input type="text" class="svc-tag-input" maxlength="32" placeholder="Optional badge" value="${this.esc(info.tag || '')}" />
             </div>
           </div>`;
       }).join('');
     }
 
-    // Live preview sync
     this._bindBannerPreview();
-
-  } catch(e) {
+  } catch (e) {
     this.toast('Failed to load promotions settings', 'error');
   }
 
-  // Bind save button (once)
   const saveBtn = document.getElementById('promo-save-btn');
   if (saveBtn && !saveBtn._bound) {
     saveBtn._bound = true;
@@ -1273,14 +1541,19 @@ FloralynAdmin.prototype.savePromotions = async function() {
       textColor: document.getElementById('banner-color')?.value || '#ffffff',
     };
 
-    // Collect service display data
-    const servicesDisplay = {};
-    document.querySelectorAll('#service-display-editor [data-svc-key]').forEach(row => {
-      const key  = row.dataset.svcKey;
+    // Merge price quick-edits onto existing services_display metadata cleanly
+    const existingRes = await this.db.from('settings').select('value').eq('key', 'services_display').maybeSingle();
+    const servicesDisplay = { ...(existingRes?.data?.value || {}) };
+    document.querySelectorAll('#service-display-editor [data-svc-id]').forEach(row => {
+      const id    = row.dataset.svcId;
+      const name  = row.dataset.svcName;
       const price = row.querySelector('.svc-price-input')?.value.trim() || '';
       const dur   = row.querySelector('.svc-dur-input')?.value.trim() || '';
       const tag   = row.querySelector('.svc-tag-input')?.value.trim() || '';
-      if (price || dur || tag) servicesDisplay[key] = { price, duration: dur, tag };
+      const base  = servicesDisplay[id] || servicesDisplay[name] || {};
+      const next  = { ...base, price, duration: dur, tag };
+      if (id) servicesDisplay[id] = next;
+      if (name) servicesDisplay[name] = next;
     });
 
     // Save to Supabase settings table

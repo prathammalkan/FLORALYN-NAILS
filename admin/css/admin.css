@@ -1074,3 +1074,44 @@ input:checked + .toggle-slider::after { transform: translateX(20px); }
   font-size: 13px; background: #fff;
 }
 .svc-display-field input:focus { outline: none; border-color: #D4688E; box-shadow: 0 0 0 3px rgba(212,104,142,.1); }
+
+/* ─── Unified CMS Extensions ─────────────────────────────────── */
+.settings-row-3 { grid-template-columns: repeat(3, 1fr); }
+.settings-field textarea,
+.form-group-modal select {
+  width: 100%;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-family: 'Poppins', sans-serif;
+  font-size: 14px;
+  padding: 10px 12px;
+}
+.settings-field textarea { resize: vertical; min-height: 70px; }
+.card-head-inline {
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
+  flex-wrap: wrap; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid var(--border);
+}
+.card-help { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+.cms-list { display: flex; flex-direction: column; gap: 10px; }
+.cms-row {
+  display: grid; grid-template-columns: 50px 1.2fr 1fr auto; gap: 10px; align-items: center;
+  padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: #faf8fe;
+}
+.cms-row input[type="color"] { width: 46px; height: 38px; border: none; border-radius: 8px; cursor: pointer; padding: 2px; background: transparent; }
+.cms-row input[type="text"], .cms-row textarea {
+  width: 100%; background: var(--surface); border: 1.5px solid var(--border);
+  border-radius: 8px; padding: 8px 10px; font-family: 'Poppins', sans-serif; font-size: 13px; color: var(--text-primary);
+}
+.faq-row { grid-template-columns: 1fr auto; align-items: start; }
+.faq-inputs { display: flex; flex-direction: column; gap: 8px; }
+.service-meta-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 5px; align-items: center; }
+.svc-chip-price { font-size: 12px; font-weight: 600; color: var(--brand-dark); background: var(--brand-light); padding: 2px 9px; border-radius: 50px; }
+.svc-chip-dur { font-size: 11px; color: var(--text-secondary); background: #f3effa; padding: 2px 9px; border-radius: 50px; }
+.svc-chip-tag { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; color: #be185d; background: #fce7f3; padding: 2px 8px; border-radius: 50px; }
+@media (max-width: 768px) {
+  .settings-row-3 { grid-template-columns: 1fr; }
+  .cms-row { grid-template-columns: 1fr; }
+  .service-card { flex-wrap: wrap; }
+}

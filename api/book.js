@@ -53,8 +53,9 @@ function escTg(v) {
   return String(v || '').replace(/([_*`\[])/g, '\\$1');
 }
 
-// ── Allowed services ──────────────────────────────────────────
-const SERVICES = new Set(['Simple Manicure','Gel Nails','Custom Design','Bridal / Special Occasion']);
+// ── Allowed fallback services (also validated dynamically from DB) ─
+const DEFAULT_SERVICES = ['Simple Manicure','Gel Nails','Custom Design','Bridal / Special Occasion'];
+const LEGACY_DB_SERVICES = new Set(DEFAULT_SERVICES);
 
 // ── Email HTML ────────────────────────────────────────────────
 function buildEmail(d) {
@@ -113,7 +114,7 @@ function parseDisplayDate(str) {
   if (dt.getUTCFullYear() !== y || dt.getUTCMonth() !== m - 1 || dt.getUTCDate() !== d) return null;
   const todayUtc = new Date();
   const minUtc = Date.UTC(todayUtc.getUTCFullYear(), todayUtc.getUTCMonth(), todayUtc.getUTCDate() - 1);
-  const maxUtc = Date.UTC(todayUtc.getUTCFullYear(), todayUtc.getUTCMonth(), todayUtc.getUTCDate() + 180);
+  const maxUtc = Date.UTC(todayUtc.getUTCFullYear(), todayUtc.getUTCMonth(), todayUtc.getUTCDate() + 366);
   if (dt.getTime() < minUtc || dt.getTime() > maxUtc) return null;
   return `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
 }
@@ -173,7 +174,7 @@ module.exports = async function handler(req, res) {
   const phone     = sanLine(body.phone, 24);
   const date      = sanLine(body.date, 60);
   const time      = sanLine(body.time, 30);
-  const service   = sanLine(body.service || '', 60);
+  const service   = sanLine(body.service || '', 100);
   const message   = san(body.message || '', 800);
 
   if (!from_name || from_name.length < 2) return res.status(400).json({ error: 'Valid name is required.' });
@@ -184,25 +185,49 @@ module.exports = async function handler(req, res) {
   const isoDate = parseDisplayDate(date);
   if (!isoDate) return res.status(400).json({ error: 'Invalid appointment date.' });
 
-  const normSvc = [...SERVICES].find(s => s.toLowerCase() === service.toLowerCase()) || 'Custom Design';
-  if (!SERVICES.has(normSvc)) return res.status(400).json({ error: 'Invalid service.' });
+  const sbUrl = process.env.SUPABASE_URL;
+  const sbKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const sb    = (sbUrl && sbKey) ? createClient(sbUrl, sbKey) : null;
+
+  // Validate service against dynamic DB catalog (falls back to default list)
+  let allowedServices = [...DEFAULT_SERVICES];
+  if (sb) {
+    try {
+      const { data: svcRows } = await sb.from('services').select('name').eq('enabled', true).limit(40);
+      if (Array.isArray(svcRows) && svcRows.length > 0) {
+        allowedServices = svcRows.map(r => r.name).filter(Boolean);
+      }
+    } catch (_) {}
+  }
+  const matchedSvc = allowedServices.find(s => s.toLowerCase() === service.toLowerCase());
+  const normSvc = matchedSvc || (allowedServices.includes('Custom Design') ? 'Custom Design' : allowedServices[0]) || 'Custom Design';
 
   const data = { from_name, phone, date, time, service: normSvc, message };
   const out  = { ok: true, saved: false, email: false, telegram: false };
 
   // ── 1. Supabase ───────────────────────────────────────────────
-  const sbUrl = process.env.SUPABASE_URL;
-  const sbKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (sbUrl && sbKey) {
+  if (sb) {
     try {
-      const sb = createClient(sbUrl, sbKey);
       const { error: e } = await sb.from('appointments').insert({
         name: from_name, phone, preferred_time: time,
         preferred_date: isoDate, service: normSvc,
         message: message || null, status: 'PENDING',
       });
-      if (!e) out.saved = true;
-      else console.error('[Supabase]', e.message);
+      if (!e) {
+        out.saved = true;
+      } else if (!LEGACY_DB_SERVICES.has(normSvc)) {
+        // Fallback if DB still has legacy 4-value CHECK constraint: preserve booking cleanly
+        const taggedMsg = `[Requested Service: ${normSvc}]` + (message ? `\n${message}` : '');
+        const { error: e2 } = await sb.from('appointments').insert({
+          name: from_name, phone, preferred_time: time,
+          preferred_date: isoDate, service: 'Custom Design',
+          message: taggedMsg.slice(0, 1000), status: 'PENDING',
+        });
+        if (!e2) out.saved = true;
+        else console.error('[Supabase fallback]', e2.message);
+      } else {
+        console.error('[Supabase]', e.message);
+      }
     } catch (e) { console.error('[Supabase]', e.message); }
   }
 

@@ -41,8 +41,11 @@
         <button class="nav-item" data-view="services">
           <span class="nav-icon" aria-hidden="true">💅</span> Services &amp; Prices
         </button>
+        <button class="nav-item" data-view="content">
+          <span class="nav-icon" aria-hidden="true">🎨</span> Shades, Hero &amp; FAQ
+        </button>
         <button class="nav-item" data-view="promotions">
-          <span class="nav-icon" aria-hidden="true">🎀</span> Promotions
+          <span class="nav-icon" aria-hidden="true">🎀</span> Offer Banner
         </button>
         <button class="nav-item" data-view="settings">
           <span class="nav-icon" aria-hidden="true">⚙️</span> Settings
@@ -215,6 +218,75 @@
       </section>
 
       <!-- ═══════════════════════════════════════════════════════ -->
+      <!--  SHADES, HERO & FAQ VIEW                                -->
+      <!-- ═══════════════════════════════════════════════════════ -->
+      <section class="view" id="view-content" style="display:none">
+        <div class="page-header">
+          <h2 class="page-title">Shades, Hero &amp; FAQ</h2>
+          <button type="button" class="btn-primary" id="content-save-btn">Save Site Content</button>
+        </div>
+
+        <!-- Hero & Booking Note Copy -->
+        <div class="settings-card">
+          <h3 class="settings-card-title">✨ Hero &amp; Booking Messaging</h3>
+          <div class="settings-row">
+            <div class="settings-field">
+              <label for="c-hero-kicker">Top Pill Kicker</label>
+              <input type="text" id="c-hero-kicker" maxlength="100" placeholder="Jetpur · Private 1-on-1 Nail Atelier" />
+            </div>
+            <div class="settings-field">
+              <label for="c-booking-note">Booking Confirmation Note</label>
+              <input type="text" id="c-booking-note" maxlength="200" placeholder="I personally review and confirm every slot within 24 hours." />
+            </div>
+          </div>
+          <div class="settings-row settings-row-3">
+            <div class="settings-field">
+              <label for="c-hero-l1">Headline Line 1</label>
+              <input type="text" id="c-hero-l1" maxlength="40" placeholder="Every nail," />
+            </div>
+            <div class="settings-field">
+              <label for="c-hero-em">Headline Script Accent</label>
+              <input type="text" id="c-hero-em" maxlength="40" placeholder="love letter" />
+            </div>
+            <div class="settings-field">
+              <label for="c-hero-l3">Headline Line 3</label>
+              <input type="text" id="c-hero-l3" maxlength="40" placeholder="painted by hand." />
+            </div>
+          </div>
+          <div class="settings-field">
+            <label for="c-hero-sub">Hero Intro Description</label>
+            <textarea id="c-hero-sub" rows="2" maxlength="260" placeholder="An intimate nail artistry studio in Jetpur..."></textarea>
+          </div>
+        </div>
+
+        <!-- Polish Bar Studio Shades & Finishes -->
+        <div class="settings-card">
+          <div class="card-head-inline">
+            <div>
+              <h3 class="settings-card-title" style="margin-bottom:4px;padding-bottom:0;border:none">💅 Studio Gel Pigments (Polish Bar)</h3>
+              <p class="card-help">Add, rename, or adjust gel shade pots shown inside the interactive Nail Verse Polish Bar.</p>
+            </div>
+            <button type="button" class="btn-secondary" id="add-shade-btn">+ Add Shade</button>
+          </div>
+          <div id="shades-editor" class="cms-list"></div>
+        </div>
+
+        <!-- FAQ Editor -->
+        <div class="settings-card">
+          <div class="card-head-inline">
+            <div>
+              <h3 class="settings-card-title" style="margin-bottom:4px;padding-bottom:0;border:none">❓ Studio FAQ Manager</h3>
+              <p class="card-help">Questions &amp; answers displayed in the FAQ accordion on your site.</p>
+            </div>
+            <button type="button" class="btn-secondary" id="add-faq-btn">+ Add Question</button>
+          </div>
+          <div id="faq-editor" class="cms-list"></div>
+        </div>
+
+        <span class="settings-status" id="content-status" role="status" aria-live="polite"></span>
+      </section>
+
+      <!-- ═══════════════════════════════════════════════════════ -->
       <!--  PROMOTIONS VIEW                                        -->
       <!-- ═══════════════════════════════════════════════════════ -->
       <section class="view" id="view-promotions" style="display:none">
@@ -291,7 +363,7 @@
                 <input type="text" id="s-name" name="name" autocomplete="organization" />
               </div>
               <div class="settings-field">
-                <label for="s-email">Contact Email</label>
+                <label for="s-email">Public Contact Email</label>
                 <input type="email" id="s-email" name="email" autocomplete="email" />
               </div>
             </div>
@@ -301,8 +373,31 @@
                 <input type="url" id="s-instagram" name="instagram" />
               </div>
               <div class="settings-field">
-                <label for="s-phone">Phone Number</label>
+                <label for="s-phone">Studio Phone Number</label>
                 <input type="tel" id="s-phone" name="phone" placeholder="+91XXXXXXXXXX" inputmode="tel" />
+              </div>
+            </div>
+            <div class="settings-row">
+              <div class="settings-field">
+                <label for="s-location">Public Location Label</label>
+                <input type="text" id="s-location" name="location" placeholder="Jetpur, Gujarat · 360370" />
+              </div>
+              <div class="settings-field">
+                <label for="s-hours-text">Public Chair Hours Label</label>
+                <input type="text" id="s-hours-text" name="hours_text" placeholder="Mon – Sat · 10 AM – 7 PM" />
+              </div>
+            </div>
+            <div class="settings-row">
+              <div class="settings-field">
+                <label for="s-closed-note">Closed / Appointment Note</label>
+                <input type="text" id="s-closed-note" name="closed_note" placeholder="Closed Sundays · Appointment Only" />
+              </div>
+              <div class="settings-field" style="justify-content:flex-end">
+                <label class="promo-toggle-label" for="s-show-phone" style="padding:8px 0">
+                  <input type="checkbox" id="s-show-phone" />
+                  <span class="promo-toggle-track"><span class="promo-toggle-thumb"></span></span>
+                  Display phone publicly on site
+                </label>
               </div>
             </div>
           </div>
@@ -423,25 +518,58 @@
 
   <!-- Service Edit Modal -->
   <div class="modal-overlay" id="service-modal-overlay" aria-modal="true" role="dialog" aria-labelledby="service-modal-title" style="display:none">
-    <div class="modal modal-sm">
+    <div class="modal">
       <div class="modal-header">
         <h3 id="service-modal-title">Edit Service</h3>
         <button class="modal-close" id="service-modal-close" aria-label="Close">✕</button>
       </div>
       <div class="modal-body">
         <input type="hidden" id="service-edit-id" />
+        <div class="settings-row">
+          <div class="form-group-modal">
+            <label for="service-edit-name">Service Name *</label>
+            <input type="text" id="service-edit-name" maxlength="100" placeholder="e.g. Gel Nails" />
+          </div>
+          <div class="form-group-modal">
+            <label for="service-edit-icon">Icon / Emoji</label>
+            <input type="text" id="service-edit-icon" maxlength="8" placeholder="💅" />
+          </div>
+        </div>
+        <div class="settings-row">
+          <div class="form-group-modal">
+            <label for="service-edit-price">Starting Price *</label>
+            <input type="text" id="service-edit-price" maxlength="40" placeholder="from ₹700" />
+          </div>
+          <div class="form-group-modal">
+            <label for="service-edit-dur">Estimated Duration</label>
+            <input type="text" id="service-edit-dur" maxlength="24" placeholder="~60 min" />
+          </div>
+        </div>
+        <div class="settings-row">
+          <div class="form-group-modal">
+            <label for="service-edit-tag">Badge / Tag (optional)</label>
+            <input type="text" id="service-edit-tag" maxlength="32" placeholder="Signature Atelier" />
+          </div>
+          <div class="form-group-modal" style="display:flex;align-items:flex-end;padding-bottom:6px">
+            <label class="promo-toggle-label" for="service-edit-featured">
+              <input type="checkbox" id="service-edit-featured" />
+              <span class="promo-toggle-track"><span class="promo-toggle-thumb"></span></span>
+              Highlight as Featured
+            </label>
+          </div>
+        </div>
         <div class="form-group-modal">
-          <label for="service-edit-name">Service Name</label>
-          <input type="text" id="service-edit-name" maxlength="100" />
+          <label for="service-edit-includes">Included Highlights (comma-separated, up to 4)</label>
+          <input type="text" id="service-edit-includes" maxlength="140" placeholder="Natural Builder, 2–4 Wk Wear, Glaze / Ombre" />
         </div>
         <div class="form-group-modal">
           <label for="service-edit-desc">Description</label>
-          <textarea id="service-edit-desc" rows="3" maxlength="500"></textarea>
+          <textarea id="service-edit-desc" rows="3" maxlength="500" placeholder="Describe what makes this treatment special…"></textarea>
         </div>
       </div>
       <div class="modal-footer">
         <button class="btn-secondary" id="service-modal-cancel">Cancel</button>
-        <button class="btn-primary" id="service-modal-save">Save</button>
+        <button class="btn-primary" id="service-modal-save">Save Service</button>
       </div>
     </div>
   </div>
@@ -457,12 +585,24 @@
         <input type="hidden" id="gallery-edit-id" />
         <img id="gallery-edit-preview" src="" alt="Preview" style="width:100%;border-radius:10px;margin-bottom:14px;max-height:200px;object-fit:cover;" />
         <div class="form-group-modal">
-          <label for="gallery-edit-alt">Alt Text (for accessibility &amp; SEO)</label>
-          <input type="text" id="gallery-edit-alt" maxlength="200" placeholder="Describe the nail art" />
+          <label for="gallery-edit-title">Look Title (card heading)</label>
+          <input type="text" id="gallery-edit-title" maxlength="100" placeholder="e.g. Rose Quartz Botanical" />
         </div>
         <div class="form-group-modal">
-          <label for="gallery-edit-title">Title (optional)</label>
-          <input type="text" id="gallery-edit-title" maxlength="100" />
+          <label for="gallery-edit-tech">Technique / Subtitle</label>
+          <input type="text" id="gallery-edit-tech" maxlength="100" placeholder="e.g. Freehand florals · Gold foil" />
+        </div>
+        <div class="form-group-modal">
+          <label for="gallery-edit-cat">Lookbook Filter Category</label>
+          <select id="gallery-edit-cat">
+            <option value="studio">Real Chair Sets</option>
+            <option value="floral">Florals &amp; Velvet</option>
+            <option value="bridal">Bridal &amp; Minimal</option>
+          </select>
+        </div>
+        <div class="form-group-modal">
+          <label for="gallery-edit-alt">Alt Text (accessibility &amp; SEO)</label>
+          <input type="text" id="gallery-edit-alt" maxlength="200" placeholder="Describe the nail art" />
         </div>
       </div>
       <div class="modal-footer">
