@@ -73,6 +73,8 @@
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="icon" type="image/png" href="images/logo.png" />
+  <link rel="apple-touch-icon" href="images/logo.png" />
   <link rel="preload" as="image" href="images/sample1.jpg" fetchpriority="high" />
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400;1,600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
@@ -294,7 +296,7 @@
 
   <div class="svc-list" role="list">
 
-    <div class="svc-row reveal" style="--d:.1s" role="listitem" data-service="Simple Manicure">
+    <div class="svc-row reveal" style="--d:.1s" role="listitem" tabindex="0" data-service="Simple Manicure">
       <div class="svc-num" aria-hidden="true">01</div>
       <div class="svc-body">
         <h3 class="svc-name">Simple Manicure</h3>
@@ -303,10 +305,11 @@
       <div class="svc-info">
         <span class="svc-dur">~45 min</span>
         <span class="svc-price">from ₹300</span>
+        <span class="svc-cta" aria-hidden="true">Book →</span>
       </div>
     </div>
 
-    <div class="svc-row reveal" style="--d:.18s" role="listitem" data-service="Gel Nails">
+    <div class="svc-row reveal" style="--d:.18s" role="listitem" tabindex="0" data-service="Gel Nails">
       <div class="svc-num" aria-hidden="true">02</div>
       <div class="svc-body">
         <h3 class="svc-name">Gel Nails</h3>
@@ -315,10 +318,11 @@
       <div class="svc-info">
         <span class="svc-dur">~60 min</span>
         <span class="svc-price">from ₹700</span>
+        <span class="svc-cta" aria-hidden="true">Book →</span>
       </div>
     </div>
 
-    <div class="svc-row svc-featured reveal" style="--d:.26s" role="listitem" data-service="Custom Design">
+    <div class="svc-row svc-featured reveal" style="--d:.26s" role="listitem" tabindex="0" data-service="Custom Design">
       <div class="svc-num" aria-hidden="true">03</div>
       <div class="svc-body">
         <h3 class="svc-name">Custom Nail Art <span class="svc-tag">Most Booked</span></h3>
@@ -327,10 +331,11 @@
       <div class="svc-info">
         <span class="svc-dur">~90 min</span>
         <span class="svc-price">from ₹1,200</span>
+        <span class="svc-cta" aria-hidden="true">Book →</span>
       </div>
     </div>
 
-    <div class="svc-row reveal" style="--d:.34s" role="listitem" data-service="Bridal / Special Occasion">
+    <div class="svc-row reveal" style="--d:.34s" role="listitem" tabindex="0" data-service="Bridal / Special Occasion">
       <div class="svc-num" aria-hidden="true">04</div>
       <div class="svc-body">
         <h3 class="svc-name">Bridal &amp; Occasions</h3>
@@ -339,6 +344,7 @@
       <div class="svc-info">
         <span class="svc-dur">~2 hrs</span>
         <span class="svc-price">from ₹2,000</span>
+        <span class="svc-cta" aria-hidden="true">Book →</span>
       </div>
     </div>
 
@@ -793,6 +799,7 @@
   <button class="lb-nav lb-n" id="lb-n" aria-label="Next">
     <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
   </button>
+  <div class="lb-cap" id="lb-cap" aria-live="polite"></div>
   <div class="lb-dots" id="lb-dots" aria-hidden="true"></div>
 </div>
 

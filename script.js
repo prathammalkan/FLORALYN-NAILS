@@ -14,6 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initHeader();
   initDrawer();
   initFloatBtn();
+  initServices();
   initReveal();
   initCustomPickers();
   initGallery();
@@ -84,15 +85,43 @@ function initDrawer() {
   });
 }
 
-/* ── Floating CTA visibility ─────────────────────────────────── */
+/* ── Floating CTA visibility (hide in hero AND inside booking) ── */
 function initFloatBtn() {
-  const btn  = document.getElementById('fbtn');
-  const hero = document.querySelector('.hero');
+  const btn     = document.getElementById('fbtn');
+  const hero    = document.querySelector('.hero');
+  const booking = document.getElementById('booking');
   if (!btn || !hero) return;
-  new IntersectionObserver(
-    ([e]) => btn.classList.toggle('on', !e.isIntersecting),
-    { threshold: 0.1 }
-  ).observe(hero);
+
+  let heroVis = true;
+  let bookVis = false;
+  const sync = () => btn.classList.toggle('on', !heroVis && !bookVis);
+
+  new IntersectionObserver(([e]) => { heroVis = e.isIntersecting; sync(); }, { threshold: 0.1 }).observe(hero);
+  if (booking) {
+    new IntersectionObserver(([e]) => { bookVis = e.isIntersecting; sync(); }, { threshold: 0.08 }).observe(booking);
+  }
+}
+
+/* ── Tap service card to pre-select & jump to booking ────────── */
+function initServices() {
+  const rows = document.querySelectorAll('.svc-row[data-service]');
+  const booking = document.getElementById('booking');
+  if (!rows.length || !booking) return;
+
+  const choose = row => {
+    const svc = row.dataset.service;
+    const radio = Array.from(document.querySelectorAll('input[name="service"]'))
+      .find(r => r.value === svc);
+    if (radio) radio.checked = true;
+    booking.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
+  rows.forEach(row => {
+    row.addEventListener('click', () => choose(row));
+    row.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); choose(row); }
+    });
+  });
 }
 
 /* ── Scroll reveal ───────────────────────────────────────────── */
@@ -269,7 +298,8 @@ function _bindLightbox(gal, lbox, limg, lp, ln, lx, dotsEl) {
   const srcs  = items.map(el => ({ src: el.querySelector('img')?.src || '', alt: el.querySelector('img')?.alt || '' }));
   if (!srcs.length) return;
 
-  let cur = 0, tx = 0;
+  const capEl = document.getElementById('lb-cap');
+  let cur = 0, tx = 0, lastFocus = null;
 
   if (dotsEl) {
     dotsEl.innerHTML = '';
@@ -285,8 +315,10 @@ function _bindLightbox(gal, lbox, limg, lp, ln, lx, dotsEl) {
     dotsEl?.querySelectorAll('.lb-dot').forEach((d, i) => d.classList.toggle('act', i === cur));
   }
   function show(i) {
+    if (lbox.hasAttribute('hidden')) lastFocus = document.activeElement;
     cur = ((i % srcs.length) + srcs.length) % srcs.length;
     limg.src = srcs[cur].src; limg.alt = srcs[cur].alt;
+    if (capEl) capEl.textContent = `${cur + 1} / ${srcs.length}${srcs[cur].alt ? ' · ' + srcs[cur].alt : ''}`;
     dots();
     lbox.removeAttribute('hidden');
     document.body.style.overflow = 'hidden';
@@ -295,6 +327,7 @@ function _bindLightbox(gal, lbox, limg, lp, ln, lx, dotsEl) {
   function hide() {
     lbox.setAttribute('hidden', '');
     document.body.style.overflow = '';
+    lastFocus?.focus?.();
   }
 
   items.forEach(el => el.addEventListener('click', () => show(+el.dataset.i)));
@@ -374,8 +407,8 @@ function initForm() {
       if (!p || !/^[\d\s\+\-\(\)]{7,20}$/.test(p)) { shake(form.querySelector('#phone')); setStatus('Please enter a valid phone number 💕', 'err'); return false; }
     }
     if (i === 1) {
-      if (!val('fdate')) { setStatus('Please pick a date 📅', 'err'); return false; }
-      if (!val('ftime')) { setStatus('Please pick a time ⏰', 'err'); return false; }
+      if (!val('fdate')) { shake(document.getElementById('cdp')); setStatus('Please pick a date 📅', 'err'); return false; }
+      if (!val('ftime')) { shake(document.getElementById('ctp')); setStatus('Please pick a time ⏰', 'err'); return false; }
     }
     return true;
   }
