@@ -1,14 +1,31 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9
         http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
 
   <url>
     <loc>https://floralyn-nails.vercel.app/</loc>
-    <lastmod>2026-11-25</lastmod>
+    <lastmod>2026-11-27</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
+    <image:image>
+      <image:loc>https://floralyn-nails.vercel.app/images/hero-atelier.jpg</image:loc>
+      <image:title>Floralyn Nail Art Studio — Rose Quartz Botanical Freehand Gel Nails</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://floralyn-nails.vercel.app/images/art-lavender-velvet.jpg</image:loc>
+      <image:title>Lilac Cat-Eye Velvet &amp; Pressed Floral Nail Art — Jetpur</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://floralyn-nails.vercel.app/images/art-bridal-pearl.jpg</image:loc>
+      <image:title>Bridal Pearl Glaze &amp; Champagne Gold Leaf Nail Set — Floralyn</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://floralyn-nails.vercel.app/images/studio-sanctuary.jpg</image:loc>
+      <image:title>Inside Floralyn Private Nail Studio Table in Jetpur, Gujarat</image:title>
+    </image:image>
   </url>
 
 </urlset>

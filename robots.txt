@@ -1,5 +1,7 @@
 User-agent: *
 Allow: /
+Allow: /images/
+Allow: /llms.txt
 Disallow: /admin/
 Disallow: /api/
 Disallow: /.env
@@ -14,8 +16,5 @@ Disallow: /wp-login.php
 Disallow: /xmlrpc.php
 Disallow: /phpmyadmin/
 Disallow: /.htaccess
-
-# Crawl delay for politeness
-Crawl-delay: 1
 
 Sitemap: https://floralyn-nails.vercel.app/sitemap.xml
