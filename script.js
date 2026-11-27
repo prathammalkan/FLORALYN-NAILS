@@ -32,10 +32,12 @@ function storageSet(store, key, val) {
 
 /* ── Helper: Attach chosen studio mood/look to Booking Form ───── */
 function applyMoodToBooking({ service, noteLine, label }, shouldScroll = true) {
-  const booking = document.getElementById('booking');
-  const msgEl   = document.getElementById('msg');
-  const badge   = document.getElementById('booking-mood-badge');
-  const bText   = document.getElementById('booking-mood-text');
+  const booking   = document.getElementById('booking');
+  const msgEl     = document.getElementById('msg');
+  const badge     = document.getElementById('booking-mood-badge');
+  const bText     = document.getElementById('booking-mood-text');
+  const formChip  = document.getElementById('form-mood-chip');
+  const formCText = document.getElementById('form-mood-text');
 
   if (service) {
     const radio = Array.from(document.querySelectorAll('input[name="service"]'))
@@ -50,12 +52,18 @@ function applyMoodToBooking({ service, noteLine, label }, shouldScroll = true) {
       .filter(l => !l.startsWith('Studio Mood:') && !l.startsWith('Lookbook Inspo:'))
       .join('\n')
       .trim();
-    msgEl.value = cleaned ? `${noteLine}\n${cleaned}` : noteLine;
+    const nextVal = cleaned ? `${noteLine}\n${cleaned}` : noteLine;
+    msgEl.value = nextVal;
+    msgEl.textContent = nextVal;
   }
 
   if (badge && bText && label) {
     bText.textContent = label;
     badge.removeAttribute('hidden');
+  }
+  if (formChip && formCText && label) {
+    formCText.textContent = label;
+    formChip.removeAttribute('hidden');
   }
 
   if (shouldScroll && booking) {
@@ -63,13 +71,12 @@ function applyMoodToBooking({ service, noteLine, label }, shouldScroll = true) {
   }
 }
 
-/* ── Theme (Sunlit Atelier / Candlelit Parlour) ───────────────── */
+/* ── Theme (Sunlit Atelier default / Candlelit Parlour toggle) ── */
 function initTheme() {
   const cb = document.getElementById('dm');
   if (!cb) return;
   const stored = storageGet(localStorage, 'flTheme');
-  const dark   = stored ? stored === 'dark'
-                        : window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const dark   = stored === 'dark';
   if (dark) { document.body.classList.add('dark'); cb.checked = true; }
   cb.addEventListener('change', () => {
     document.body.classList.toggle('dark', cb.checked);
@@ -255,18 +262,21 @@ function initNailVerse() {
   });
 }
 
-/* ── Floating CTA visibility (hide in hero AND inside booking) ── */
+/* ── Floating CTA visibility (hide in hero, polish bar & booking) */
 function initFloatBtn() {
   const btn     = document.getElementById('fbtn');
   const hero    = document.querySelector('.hero');
+  const bar     = document.getElementById('studio-bar');
   const booking = document.getElementById('booking');
   if (!btn || !hero) return;
 
-  let heroVis = true;
-  let bookVis = false;
-  const sync = () => btn.classList.toggle('on', !heroVis && !bookVis);
+  let heroVis = true, barVis = false, bookVis = false;
+  const sync = () => btn.classList.toggle('on', !heroVis && !barVis && !bookVis);
 
   new IntersectionObserver(([e]) => { heroVis = e.isIntersecting; sync(); }, { threshold: 0.1 }).observe(hero);
+  if (bar) {
+    new IntersectionObserver(([e]) => { barVis = e.isIntersecting; sync(); }, { threshold: 0.25 }).observe(bar);
+  }
   if (booking) {
     new IntersectionObserver(([e]) => { bookVis = e.isIntersecting; sync(); }, { threshold: 0.08 }).observe(booking);
   }
